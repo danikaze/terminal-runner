@@ -58,6 +58,9 @@
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
-    "random-js": "^2.1.0"
+    "colors": "^1.4.0",
+    "random-js": "^2.1.0",
+    "winston": "^3.2.1",
+    "winston-daily-rotate-file": "^4.4.0"
   }
 }

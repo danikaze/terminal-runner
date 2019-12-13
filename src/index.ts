@@ -1,2 +1,4 @@
-// tslint:disable-next-line: no-console
-console.log('Hello world');
+import { GameLogger } from './engine/game-logger';
+
+const log = new GameLogger();
+log.showLoggerFormats();
