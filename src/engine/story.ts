@@ -1,19 +1,42 @@
-export interface StoryData {
-  name: string;
+import { GameStatus } from './game';
+import { logger } from './game-logger';
+
+type SelectConditionCallback = (status: GameStatus) => boolean;
+type RunCallback = () => Promise<void>;
+
+interface InternalStoryData {
+  source: string | undefined;
 }
 
-export class Story {
-  public name: string;
-  public source: string | undefined;
+export interface StoryData {
+  name: string;
+  selectCondition: SelectConditionCallback;
+  run: RunCallback;
+}
 
-  constructor(data: StoryData, source?: string) {
+/**
+ * A Story is what dictates the game flow, actions, text, etc.
+ */
+export class Story {
+  protected static idCounter = 0;
+
+  public id: number;
+  public source: string | undefined;
+  public name: string;
+  public selectCondition: SelectConditionCallback;
+  protected runStory: RunCallback;
+
+  constructor(internal: InternalStoryData, data: StoryData) {
     const errors = Story.validateStory(data);
     if (errors) {
       throw new Error(errors.join('\n'));
     }
 
-    this.source = source;
+    this.id = ++Story.idCounter;
+    this.source = internal.source;
     this.name = data.name;
+    this.selectCondition = data.selectCondition;
+    this.runStory = data.run;
   }
 
   public static validateStory(data: StoryData): string[] | null {
@@ -24,5 +47,10 @@ export class Story {
     }
 
     return errors.length === 0 ? null : errors;
+  }
+
+  public async run(): Promise<void> {
+    logger.runningStory(this);
+    return this.runStory();
   }
 }

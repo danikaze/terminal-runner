@@ -30,6 +30,10 @@ export class GameLogger {
   public errorLoadingStory(errors: string): void {
     this.logger.warn(errors);
   }
+
+  public runningStory(story: Story): void {
+    this.logger.info(`Running story: ${story.name}`);
+  }
 }
 
 export let logger: GameLogger;

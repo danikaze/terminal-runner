@@ -13,6 +13,7 @@ async function run() {
   });
 
   await game.init();
+  await game.start();
 }
 
 run();

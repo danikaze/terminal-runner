@@ -9,6 +9,8 @@ interface GameOptions {
   storiesFolders: string[];
 }
 
+export interface GameStatus {}
+
 export class Game {
   protected readonly options: GameOptions;
   protected stories: Story[] = [];
@@ -34,10 +36,27 @@ export class Game {
     return errors.length === 0 ? null : errors;
   }
 
+  /**
+   * Initialize all the required resources
+   */
   public async init(): Promise<void> {
     await this.loadStories(this.options.storiesFolders);
   }
 
+  /**
+   * Start the game cycle
+   */
+  public async start(): Promise<void> {
+    let story = this.selectStory();
+    while (story) {
+      await story.run();
+      story = this.selectStory();
+    }
+  }
+
+  /**
+   * Load the stories from the specified folder
+   */
   protected async loadStories(folders: string[]): Promise<void> {
     folders.forEach(folder => {
       readdirSync(folder).forEach(file => {
@@ -48,7 +67,8 @@ export class Game {
         try {
           const storyData = __non_webpack_require__(join(folder, file))
             .story as StoryData;
-          const story = new Story(storyData, `${folder}/${file}`);
+          const internal = { source: `${folder}/${file}` };
+          const story = new Story(internal, storyData);
           this.stories.push(story);
           logger.storyLoaded(story);
         } catch (errors) {
@@ -56,5 +76,30 @@ export class Game {
         }
       });
     });
+  }
+
+  /**
+   * Get a secure copy of the current game status so it can be used by the stories
+   */
+  protected getStatus(): GameStatus {
+    return {};
+  }
+
+  /**
+   * Get one random story from all the selectable ones
+   */
+  protected selectStory(): Story | undefined {
+    const gameStatus = this.getStatus();
+    const selectableStories = this.stories.filter(story =>
+      story.selectCondition(gameStatus)
+    );
+
+    if (selectableStories.length === 0) return;
+
+    // TODO: Provide a proper RNG
+    const index = Math.floor(
+      (Math.random() * 1000000) % selectableStories.length
+    );
+    return selectableStories[index];
   }
 }
