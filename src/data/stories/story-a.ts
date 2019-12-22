@@ -1,16 +1,22 @@
 import { StoryData } from 'engine/story';
 
 const RUN_MAX_TIMES = 3;
-let run = 0;
 
-export const story: StoryData = {
+interface LocalData {
+  run: number;
+}
+
+export const story: StoryData<LocalData, never> = {
   name: 'Story A',
-  selectCondition: () => {
-    return run < RUN_MAX_TIMES;
+  onLoad: ({ local }) => {
+    local.run = 0;
   },
-  run: () =>
+  selectCondition: ({ local }) => {
+    return local.run < RUN_MAX_TIMES;
+  },
+  run: ({ local }) =>
     new Promise<void>(resolve => {
-      run++;
+      local.run++;
       resolve();
     }),
 };

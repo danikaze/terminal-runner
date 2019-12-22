@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { GameUi } from './model/ui';
-import { Story, StoryData } from './story';
+import { Story, StoryData, StoryRunData } from './story';
 import { logger } from './game-logger';
 
 interface GameOptions {
@@ -13,7 +13,12 @@ export interface GameStatus {}
 
 export class Game {
   protected readonly options: GameOptions;
+  /** List of loaded stories */
   protected stories: Story[] = [];
+  /** variables to share across stories */
+  protected global: Dict = {};
+  /** variables local to each story */
+  protected local: { [key: number]: {} } = {};
 
   constructor(options: GameOptions) {
     const errors = Game.validateOptions(options);
@@ -49,7 +54,7 @@ export class Game {
   public async start(): Promise<void> {
     let story = this.selectStory();
     while (story) {
-      await story.run();
+      await story.run(this.getStoryRunData(story.id));
       story = this.selectStory();
     }
   }
@@ -69,7 +74,9 @@ export class Game {
             .story as StoryData;
           const internal = { source: `${folder}/${file}` };
           const story = new Story(internal, storyData);
+          this.local[story.id] = {};
           this.stories.push(story);
+          story.loaded(this.getStoryRunData(story.id));
           logger.storyLoaded(story);
         } catch (errors) {
           logger.errorLoadingStory(errors);
@@ -79,19 +86,11 @@ export class Game {
   }
 
   /**
-   * Get a secure copy of the current game status so it can be used by the stories
-   */
-  protected getStatus(): GameStatus {
-    return {};
-  }
-
-  /**
    * Get one random story from all the selectable ones
    */
   protected selectStory(): Story | undefined {
-    const gameStatus = this.getStatus();
     const selectableStories = this.stories.filter(story =>
-      story.selectCondition(gameStatus)
+      story.selectCondition(this.getStoryRunData(story.id))
     );
 
     if (selectableStories.length === 0) return;
@@ -101,5 +100,18 @@ export class Game {
       (Math.random() * 1000000) % selectableStories.length
     );
     return selectableStories[index];
+  }
+
+  /**
+   * Get the data used when executing a story
+   *
+   * @param storyId id for the local data
+   */
+  protected getStoryRunData(storyId: number): StoryRunData {
+    return {
+      ui: this.options.ui,
+      global: this.global,
+      local: this.local[storyId],
+    };
   }
 }
