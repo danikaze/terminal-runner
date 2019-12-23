@@ -1,0 +1,17 @@
+{
+  "check-coverage": false,
+  "all": true,
+  "include": [
+    "src/**"
+  ],
+  "exclude": [
+    "src/**/__test"
+  ],
+  "reporter": [
+    "lcov",
+    "text-summary"
+  ],
+  "cache": false,
+  "temp-dir": "./coverage-tmp",
+  "report-dir": "./coverage"
+}
