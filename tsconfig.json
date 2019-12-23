@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
+    "module": "CommonJS",
     "jsx": "preserve",
     "lib": ["es2017"],
     "baseUrl": "src",
@@ -27,5 +27,6 @@
       }
     ]
   },
-  "include": ["global.d.ts", "src/**/*.ts"]
+  "include": ["global.d.ts", "src/**/*.ts"],
+  "exclude": ["src/**/__test"]
 }

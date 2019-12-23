@@ -1,14 +1,19 @@
 # =========================
 # Project Files
 # =========================
-.DS_Store
-logs
-*.SUBLIME-PROJECT
-*.SUBLIME-WORKSPACE
 node_modules
+logs
 app
 coverage
+coverage-tmp
+.nyc_output
+
+# =========================
+# IDEs
+# =========================
 .vscode
+*.SUBLIME-PROJECT
+*.SUBLIME-WORKSPACE
 
 # =========================
 # Operating System Files
