@@ -1,0 +1,54 @@
+{
+  "name": "terminal-runner",
+  "version": "0.1.0",
+  "description": "Terminal based game",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node app/index.js",
+    "build": "webpack",
+    "dev": "webpack --env=dev",
+    "test": "npm run lint",
+    "lint": "tslint -p tsconfig.json -c tslint.yaml",
+    "prettier": "prettier --write '**/*.{ts,tsx}'"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run prettier"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danikaze/terminal-runner.git"
+  },
+  "author": "danikaze <danikaze@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/danikaze/terminal-runner/issues"
+  },
+  "engines": {
+    "node": "10.15.x",
+    "npm": "6.4.x"
+  },
+  "homepage": "https://github.com/danikaze/terminal-runner",
+  "devDependencies": {
+    "@types/node": "^12.12.17",
+    "clean-webpack-plugin": "^3.0.0",
+    "husky": "^3.1.0",
+    "prettier": "^1.19.1",
+    "rimraf": "^3.0.0",
+    "ts-loader": "^6.2.1",
+    "ts-node": "^8.5.4",
+    "tsconfig-paths-webpack-plugin": "^3.2.0",
+    "tslint": "^5.20.1",
+    "tslint-consistent-codestyle": "^1.16.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "tslint-lines-between-class-members": "^1.3.6",
+    "tslint-loader": "^3.5.4",
+    "tslint-microsoft-contrib": "^6.2.0",
+    "tslint-react": "^4.1.0",
+    "typescript": "^3.7.3",
+    "typescript-tslint-plugin": "^0.5.5",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  }
+}
