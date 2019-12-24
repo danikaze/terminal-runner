@@ -1,12 +1,12 @@
 import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { GameUi } from './model/ui';
+import { GameUi, GameUiConstructor } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
 import { logger } from './game-logger';
 import { Rng } from 'util/rng';
 
 interface GameOptions {
-  ui: GameUi;
+  Ui: GameUiConstructor;
   storiesFolders: string[];
 }
 
@@ -14,6 +14,8 @@ export class Game {
   protected readonly options: GameOptions;
   /** RNG system to use across subsystems */
   protected readonly rng: Rng;
+  /** UI to use */
+  protected ui!: GameUi;
   /** List of loaded stories */
   protected stories: Story[] = [];
   /** variables to share across stories */
@@ -31,6 +33,9 @@ export class Game {
     this.rng = new Rng();
   }
 
+  /**
+   * Validate the passed options to detect runtime errors
+   */
   public static validateOptions(options: GameOptions): string[] | null {
     const errors: string[] = [];
 
@@ -48,17 +53,22 @@ export class Game {
    */
   public async init(): Promise<void> {
     await this.loadStories(this.options.storiesFolders);
+    this.ui = new this.options.Ui({ rng: this.rng });
   }
 
   /**
    * Start the game cycle
    */
   public async start(): Promise<void> {
+    await this.ui.start();
+
     let story = this.selectStory();
     while (story) {
       await story.run(this.getStoryRunData(story.id));
       story = this.selectStory();
     }
+
+    await this.ui.end();
   }
 
   /**
@@ -107,7 +117,7 @@ export class Game {
    */
   protected getStoryRunData(storyId: number): StoryRunData {
     return {
-      ui: this.options.ui,
+      ui: this.ui,
       global: this.global,
       local: this.local[storyId],
     };
