@@ -3,16 +3,17 @@ import { join } from 'path';
 import { GameUi } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
 import { logger } from './game-logger';
+import { Rng } from 'util/rng';
 
 interface GameOptions {
   ui: GameUi;
   storiesFolders: string[];
 }
 
-export interface GameStatus {}
-
 export class Game {
   protected readonly options: GameOptions;
+  /** RNG system to use across subsystems */
+  protected readonly rng: Rng;
   /** List of loaded stories */
   protected stories: Story[] = [];
   /** variables to share across stories */
@@ -27,6 +28,7 @@ export class Game {
     }
 
     this.options = options;
+    this.rng = new Rng();
   }
 
   public static validateOptions(options: GameOptions): string[] | null {
@@ -95,11 +97,7 @@ export class Game {
 
     if (selectableStories.length === 0) return;
 
-    // TODO: Provide a proper RNG
-    const index = Math.floor(
-      (Math.random() * 1000000) % selectableStories.length
-    );
-    return selectableStories[index];
+    return this.rng.pick(selectableStories);
   }
 
   /**
