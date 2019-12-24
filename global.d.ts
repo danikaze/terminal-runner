@@ -8,3 +8,4 @@ declare const __non_webpack_require__: NodeRequireFunction;
 
 // Shared Interfaces
 type Dict = { [key: string]: unknown };
+type NonEmptyArray<T> = [T, ...T[]];

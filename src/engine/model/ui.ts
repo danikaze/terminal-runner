@@ -44,5 +44,8 @@ export interface GameUi {
   /**
    * Present the provided options for the user to select between them
    */
-  userSelect<T>(data: SelectData<T>[], options?: SelectOptions<T>): Promise<T>;
+  userSelect<T>(
+    data: NonEmptyArray<SelectData<T>>,
+    options?: SelectOptions<T>
+  ): Promise<T>;
 }

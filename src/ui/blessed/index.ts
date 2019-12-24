@@ -13,12 +13,12 @@ export class TerminalUi implements GameUi {
   public async end(): Promise<void> {}
 
   public async userSelect<T>(
-    data: SelectData<T>[],
+    data: NonEmptyArray<SelectData<T>>,
     options?: SelectOptions<T>
   ): Promise<T> {
     const selectOptions =
       options && options.randomSort ? this.rng.shuffle(data) : data;
 
-    return selectOptions[0] && selectOptions[0].data;
+    return (this.rng.pick(selectOptions) as SelectData<T>).data;
   }
 }
