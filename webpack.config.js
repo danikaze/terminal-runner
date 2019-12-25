@@ -3,6 +3,7 @@ const { DefinePlugin } = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const GitRevisionPlugin = require('git-revision-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 let constants;
 try {
@@ -31,6 +32,7 @@ module.exports = env => {
       modules: false,
       children: false,
       excludeAssets: [/hot(-update)?\.js(on)?/, /webpack-dev-server/],
+      warningsFilter: [/node-pty/],
     },
 
     resolve: {
@@ -61,6 +63,21 @@ module.exports = env => {
             },
           },
         },
+        {
+          test: /\.node$/,
+          use: 'node-loader',
+        },
+        // In Windows, blessed requires some files for terminals in runtime
+        // This just fixes the routes so they are kept inside the `app` target folder
+        {
+          test: join(__dirname, 'node_modules', 'blessed', 'lib', 'tput.js'),
+          loader: 'string-replace-loader',
+          options: {
+            search: "__dirname \\+ '/../usr/",
+            replace: "__dirname + '/usr/",
+            flags: 'g',
+          },
+        },
       ],
     },
 
@@ -77,6 +94,10 @@ module.exports = env => {
         NODE_ENV: JSON.stringify(isProd ? 'production' : 'development'),
         IS_PRODUCTION: isProd,
       }),
+      // Copy the files required by blessed in runtime into the target `app` folder:
+      new CopyPlugin([
+        { from: join(__dirname, 'node_modules', 'blessed', 'usr'), to: 'usr' },
+      ]),
     ].concat(isProd ? [new CleanWebpackPlugin()] : []),
   };
 };

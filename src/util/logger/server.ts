@@ -3,14 +3,13 @@
  */
 import { createLogger, transports, format, Logger as Winston } from 'winston';
 import * as DailyRotateFile from 'winston-daily-rotate-file';
-import { grey } from 'colors/safe';
 import { NsLogger, LoggerOptions, defaultOptions } from '.';
 
 const customFormat = format.printf(
   ({ level, message, timestamp, namespace }) => {
-    return `${timestamp ? `${timestamp} ` : ''}[${level} | ${grey(
-      namespace
-    )}] ${message}`;
+    return `${
+      timestamp ? `${timestamp} ` : ''
+    }[${level} | ${namespace}] ${message}`;
   }
 );
 

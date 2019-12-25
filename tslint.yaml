@@ -246,6 +246,7 @@ rules:
   variable-name:
     - true
     - check-format
+    - allow-leading-underscore
     - allow-pascal-case
     - ban-keywords
 
