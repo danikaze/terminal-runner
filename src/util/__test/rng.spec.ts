@@ -1,4 +1,5 @@
 import { assert } from 'chai';
+import * as sinon from 'sinon';
 import { Rng } from '../rng';
 
 describe('#Rng', () => {
@@ -84,12 +85,16 @@ describe('#Rng', () => {
   });
 
   it('weightedPick()', () => {
-    const values = [
-      { data: 1, weight: 1 },
-      { data: 'x', weight: 0 },
+    const values: { data: number | string; weight: number }[] = [
+      { data: 1, weight: 10 },
+      { data: 2, weight: 15 },
       { data: 3, weight: 3 },
+      { data: 'x', weight: 0 },
+      { data: 5, weight: 5 },
     ];
-    const result = rng.weightedPick<number | string>(values);
+
+    // test a random value
+    const result = rng.weightedPick(values);
 
     assert.isTrue(typeof result !== 'undefined');
     assert.notEqual(result, 'x');
@@ -98,6 +103,21 @@ describe('#Rng', () => {
       -1
     );
     assert.equal(rng.getStatus().usedCount, 1);
+
+    // test with faked random returns
+    function check(from: number, to: number, expected: number | string) {
+      const stub = sinon.stub(rng, 'integer');
+      for (let i = from; i <= to; i++) {
+        stub.callsFake(() => i);
+        assert.equal(rng.weightedPick(values), expected);
+      }
+      stub.restore();
+    }
+
+    check(1, 10, 1);
+    check(11, 25, 2);
+    check(26, 28, 3);
+    check(29, 32, 5);
   });
 
   it('shuffle()', () => {
