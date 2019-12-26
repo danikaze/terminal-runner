@@ -44,7 +44,7 @@ class Logger {
   }
 }
 
-export function init(options?: LoggerOptions): void {
+export function init(options?: Partial<LoggerOptions>): void {
   instance =
     instance ||
     new Logger({

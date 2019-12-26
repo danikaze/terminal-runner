@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { GameUi, GameUiConstructor } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
-import { logger } from './game-logger';
+import { logger, GameLogger } from './game-logger';
 import { Rng } from 'util/rng';
 
 interface GameOptions {
@@ -52,8 +52,13 @@ export class Game {
    * Initialize all the required resources
    */
   public async init(): Promise<void> {
-    await this.loadStories(this.options.storiesFolders);
     this.ui = new this.options.Ui({ rng: this.rng });
+    const loggerTransports = this.ui.gameLog
+      ? [this.ui.gameLog.getTransport()]
+      : undefined;
+
+    GameLogger.init(loggerTransports);
+    await this.loadStories(this.options.storiesFolders);
   }
 
   /**

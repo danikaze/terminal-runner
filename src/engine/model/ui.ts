@@ -1,3 +1,4 @@
+import * as Transport from 'winston-transport';
 import { Rng } from 'util/rng';
 
 export interface InitData {
@@ -33,6 +34,15 @@ export interface SelectOptions<T> {
 }
 
 export interface GameUi {
+  /**
+   * If defined, the game will use it to make the UI aware of the game logs
+   */
+  gameLog?: {
+    getTransport(): Transport;
+    show(): Promise<void>;
+    hide(): Promise<void>;
+    toggle(): Promise<void>;
+  };
   /**
    * Called when the game starts
    */

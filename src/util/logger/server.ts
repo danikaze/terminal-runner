@@ -16,7 +16,7 @@ const customFormat = format.printf(
 let instance: Winston;
 const nsLoggers: { [namespace: string]: NsLogger } = {};
 
-export function init(options?: LoggerOptions): void {
+export function init(options?: Partial<LoggerOptions>): void {
   if (instance) {
     return;
   }
@@ -26,7 +26,7 @@ export function init(options?: LoggerOptions): void {
     ...options,
   };
 
-  const winstonTransports = [];
+  const winstonTransports = opt.transports || [];
 
   if (opt.console) {
     winstonTransports.push(new transports.Console());

@@ -1,17 +1,17 @@
-import { init, getLogger } from 'util/logger/server';
-import { NsLogger } from 'util/logger';
+import * as Transport from 'winston-transport';
+import { default as logSystem, NsLogger, LoggerLevel } from 'util/logger';
 import { Story } from 'engine/story';
 
 export class GameLogger {
   private readonly logger: NsLogger;
 
   constructor() {
-    init();
-    this.logger = getLogger('global');
+    this.logger = logSystem.getLogger('global');
     this.logger.info('GameLogger initializated');
   }
 
-  public static init() {
+  public static init(extraTransports?: Transport[]) {
+    logSystem.init({ transports: extraTransports });
     logger = new GameLogger();
   }
 
@@ -21,6 +21,10 @@ export class GameLogger {
     this.logger.info('2. info msg');
     this.logger.verbose('3. verbose msg');
     this.logger.debug('4. debug msg');
+  }
+
+  public msg(level: LoggerLevel, msg: string) {
+    this.logger[level](msg);
   }
 
   public storyLoaded(story: Story): void {
