@@ -96,11 +96,18 @@ export class Rng {
   /**
    * Get one of the provided options based on their weight
    */
-  public weightedPick<T>(values: { data: T; weight: number }[]): T {
-    const total = values.reduce((total, option) => total + option.weight, 0);
+  public weightedPick<T>(values: { data: T; weight: number }[]): T | undefined {
+    const addedValues: { data: T; weight: number }[] = [];
+    const total = values.reduce((total, option) => {
+      addedValues.push({
+        data: option.data,
+        weight: total + option.weight,
+      });
+      return total + option.weight;
+    }, 0);
     const value = this.integer(1, total);
 
-    for (const option of values) {
+    for (const option of addedValues) {
       if (value <= option.weight) {
         return option.data;
       }
