@@ -40,7 +40,11 @@ export function init(options?: Partial<LoggerOptions>): void {
     silent: opt.silent,
     level: opt.level,
     transports: winstonTransports,
-    format: format.combine(format.colorize(), format.timestamp(), customFormat),
+    format: format.combine(
+      format.colorize({ colors: { debug: 'magenta' } }),
+      format.timestamp(),
+      customFormat
+    ),
   });
 }
 

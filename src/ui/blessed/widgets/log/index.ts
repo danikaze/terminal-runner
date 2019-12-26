@@ -13,6 +13,7 @@ export class Log {
   constructor(options: LogOptions) {
     this.screen = options.screen;
     this.logBox = contrib.log({
+      tags: true,
       border: { type: 'line' },
       label: 'Game Log',
       top: 0,
@@ -25,6 +26,7 @@ export class Log {
   public async show(): Promise<void> {
     this.isVisible = true;
     this.screen.append(this.logBox);
+    this.logBox.focus();
     this.screen.render();
   }
 

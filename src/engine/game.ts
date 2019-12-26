@@ -68,7 +68,7 @@ export class Game {
    * Start the game cycle
    */
   public async start(): Promise<void> {
-    logger.gameStart();
+    logger.game.start();
     await this.ui.start();
 
     let story = this.selectStory();
@@ -77,7 +77,7 @@ export class Game {
       story = this.selectStory();
     }
 
-    logger.gameEnd();
+    logger.game.end();
     await this.ui.end();
   }
 
@@ -99,9 +99,9 @@ export class Game {
           this.local[story.id] = {};
           this.stories.push(story);
           story.loaded(this.getStoryRunData(story.id));
-          logger.storyLoaded(story);
+          logger.story.loaded(story);
         } catch (errors) {
-          logger.errorLoadingStory(errors);
+          logger.story.errorLoading(errors);
         }
       });
     });

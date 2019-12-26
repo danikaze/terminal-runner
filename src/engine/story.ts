@@ -52,7 +52,7 @@ export class Story<L extends {} = {}, G extends {} = {}> {
   }
 
   public async run(data: StoryRunData<L, G>): Promise<void> {
-    logger.runningStory((this as unknown) as Story);
+    logger.story.running((this as unknown) as Story);
     return this.runStory(data);
   }
 }

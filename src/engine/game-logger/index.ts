@@ -1,53 +1,48 @@
 import * as Transport from 'winston-transport';
 import { default as logSystem, NsLogger, LoggerLevel } from 'util/logger';
-import { Story } from 'engine/story';
+import { GameSystemLogger } from './game';
+import { StoryLogger } from './story';
 
 export class GameLogger {
-  private readonly logger: NsLogger;
+  public readonly global: NsLogger;
+  public readonly game: GameSystemLogger;
+  public readonly story: StoryLogger;
 
   constructor() {
-    this.logger = logSystem.getLogger('global');
-    this.logger.info('GameLogger initializated');
+    this.global = logSystem.getLogger('global');
+    this.game = new GameSystemLogger();
+    this.story = new StoryLogger();
+    this.global.info('GameLogger initializated');
   }
 
   public static init(extraTransports?: Transport[]) {
+    if (logger) {
+      logger.loggerAlreadyInitialized();
+      return;
+    }
+
     logSystem.init({
       console: false,
       transports: extraTransports,
     });
     logger = new GameLogger();
+    logger.showLoggerFormats();
   }
 
   public showLoggerFormats() {
-    this.logger.error('0. error msg');
-    this.logger.warn('1. warn msg');
-    this.logger.info('2. info msg');
-    this.logger.verbose('3. verbose msg');
-    this.logger.debug('4. debug msg');
+    this.global.error('0. error msg');
+    this.global.warn('1. warn msg');
+    this.global.info('2. info msg');
+    this.global.verbose('3. verbose msg');
+    this.global.debug('4. debug msg');
   }
 
   public msg(level: LoggerLevel, msg: string) {
-    this.logger[level](msg);
+    this.global[level](msg);
   }
 
-  public gameStart(): void {
-    this.logger.info(`Game starting`);
-  }
-
-  public gameEnd(): void {
-    this.logger.info(`Game ending`);
-  }
-
-  public storyLoaded(story: Story): void {
-    this.logger.info(`Story loaded: ${story.name}`);
-  }
-
-  public errorLoadingStory(errors: string): void {
-    this.logger.warn(errors);
-  }
-
-  public runningStory(story: Story): void {
-    this.logger.info(`Running story: ${story.name}`);
+  protected loggerAlreadyInitialized() {
+    this.global.warn('Logger was already initialized');
   }
 }
 

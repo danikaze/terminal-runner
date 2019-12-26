@@ -2,6 +2,7 @@ import * as Transport from 'winston-transport';
 import { WinstonTransport, LogData, SYMBOL_MESSAGE } from './winston-transport';
 import * as blessed from 'blessed';
 import { GameUi, InitData, SelectData, SelectOptions } from 'engine/model/ui';
+import { logger } from 'engine/game-logger';
 import { Rng } from 'util/rng';
 import { Log } from './widgets/log';
 
@@ -54,7 +55,10 @@ export class TerminalUi implements GameUi {
   public async end(): Promise<void> {
     if (this.isDebugModeEnabled) {
       if (this.log) {
-        this.log.addMessage('Press Q to exit...');
+        logger.msg(
+          'debug',
+          'Press [{yellow-fg}Esc{/yellow-fg}|{yellow-fg}Q{/yellow-fg}|{yellow-fg}C-c{/yellow-fg}] to exit...'
+        );
       }
       return;
     }
@@ -72,7 +76,7 @@ export class TerminalUi implements GameUi {
       setTimeout(() => {
         const option = this.rng.pick(selectOptions);
         resolve(option && option.data);
-      }, 2000);
+      }, 500);
       this.screen.render();
     });
   }
