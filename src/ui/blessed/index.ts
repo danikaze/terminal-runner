@@ -76,6 +76,7 @@ export class TerminalUi implements GameUi {
       setTimeout(() => {
         const option = this.rng.pick(selectOptions);
         resolve(option && option.data);
+        // tslint:disable-next-line: no-magic-numbers
       }, 500);
       this.screen.render();
     });
