@@ -2,6 +2,7 @@ const { join } = require('path');
 const { DefinePlugin } = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const GitRevisionPlugin = require('git-revision-webpack-plugin');
 
 let constants;
 try {
@@ -52,7 +53,7 @@ module.exports = env => {
       rules: [
         {
           test: /\.tsx?$/,
-          exclude: /node_modules/,
+          exclude: /(node_modules)|(data)/,
           use: {
             loader: 'ts-loader',
             options: {
@@ -64,6 +65,7 @@ module.exports = env => {
     },
 
     plugins: [
+      new GitRevisionPlugin(),
       new DefinePlugin({
         ...(() => {
           const c = { ...constants };
