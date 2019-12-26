@@ -11,7 +11,10 @@ export class GameLogger {
   }
 
   public static init(extraTransports?: Transport[]) {
-    logSystem.init({ transports: extraTransports });
+    logSystem.init({
+      console: false,
+      transports: extraTransports,
+    });
     logger = new GameLogger();
   }
 
@@ -25,6 +28,14 @@ export class GameLogger {
 
   public msg(level: LoggerLevel, msg: string) {
     this.logger[level](msg);
+  }
+
+  public gameStart(): void {
+    this.logger.info(`Game starting`);
+  }
+
+  public gameEnd(): void {
+    this.logger.info(`Game ending`);
   }
 
   public storyLoaded(story: Story): void {

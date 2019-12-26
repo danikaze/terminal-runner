@@ -1,30 +1,79 @@
-import { screen, Widgets } from 'blessed';
+import * as Transport from 'winston-transport';
+import { WinstonTransport, LogData, SYMBOL_MESSAGE } from './winston-transport';
+import * as blessed from 'blessed';
 import { GameUi, InitData, SelectData, SelectOptions } from 'engine/model/ui';
 import { Rng } from 'util/rng';
+import { Log } from './widgets/log';
 
 export class TerminalUi implements GameUi {
+  public gameLog = {
+    getTransport: (): Transport => {
+      return new WinstonTransport({
+        uiLog: this.gameLog.addLog.bind(this),
+      });
+    },
+    show: async (): Promise<void> => {
+      return (this.log as Log).show();
+    },
+    hide: async (): Promise<void> => {
+      return (this.log as Log).hide();
+    },
+    toggle: async (): Promise<void> => {
+      return (this.log as Log).toggle();
+    },
+    addLog: (info: LogData): void => {
+      (this.log as Log).addMessage(info[SYMBOL_MESSAGE]);
+    },
+  };
+
   private readonly rng: Rng;
-  private screen!: Widgets.Screen;
+  private readonly isDebugModeEnabled: boolean;
+  private readonly screen: blessed.Widgets.Screen;
+
+  private readonly log?: Log;
 
   constructor(data: InitData) {
     this.rng = data.rng;
+    this.isDebugModeEnabled = !!data.debug;
+
+    this.screen = blessed.screen({ smartCSR: true });
+
+    this.screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+
+    if (!this.isDebugModeEnabled) {
+      return;
+    }
+
+    this.log = new Log(this.screen);
   }
 
   public async start(): Promise<void> {
-    this.screen = screen({ smartCSR: true });
-    this.screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
     this.screen.render();
   }
 
-  public async end(): Promise<void> {}
+  public async end(): Promise<void> {
+    if (this.isDebugModeEnabled) {
+      if (this.log) {
+        this.log.addMessage('Press Q to exit...');
+      }
+      return;
+    }
+    process.exit(0);
+  }
 
   public async userSelect<T>(
     data: NonEmptyArray<SelectData<T>>,
     options?: SelectOptions<T>
   ): Promise<T> {
-    const selectOptions =
-      options && options.randomSort ? this.rng.shuffle(data) : data;
+    return new Promise<T>(resolve => {
+      const selectOptions =
+        options && options.randomSort ? this.rng.shuffle(data) : data;
 
-    return (this.rng.pick(selectOptions) as SelectData<T>).data;
+      setTimeout(() => {
+        const option = this.rng.pick(selectOptions);
+        resolve(option && option.data);
+      }, 2000);
+      this.screen.render();
+    });
   }
 }

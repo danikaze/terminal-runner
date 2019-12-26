@@ -52,7 +52,10 @@ export class Game {
    * Initialize all the required resources
    */
   public async init(): Promise<void> {
-    this.ui = new this.options.Ui({ rng: this.rng });
+    this.ui = new this.options.Ui({
+      debug: true,
+      rng: this.rng,
+    });
     const loggerTransports = this.ui.gameLog
       ? [this.ui.gameLog.getTransport()]
       : undefined;
@@ -65,6 +68,7 @@ export class Game {
    * Start the game cycle
    */
   public async start(): Promise<void> {
+    logger.gameStart();
     await this.ui.start();
 
     let story = this.selectStory();
@@ -73,6 +77,7 @@ export class Game {
       story = this.selectStory();
     }
 
+    logger.gameEnd();
     await this.ui.end();
   }
 

@@ -4,6 +4,8 @@ import { Rng } from 'util/rng';
 export interface InitData {
   /** Random engine used by the game */
   rng: Rng;
+  /** Debug mode enabled or not */
+  debug?: boolean;
 }
 
 export interface GameUiConstructor {

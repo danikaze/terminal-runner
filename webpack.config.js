@@ -32,7 +32,11 @@ module.exports = env => {
       modules: false,
       children: false,
       excludeAssets: [/hot(-update)?\.js(on)?/, /webpack-dev-server/],
-      warningsFilter: [/node-pty/],
+      warningsFilter: [
+        /node-pty/,
+        'event-stream/index.js',
+        'colors/lib/colors.js',
+      ],
     },
 
     resolve: {
