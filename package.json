@@ -12,8 +12,9 @@
     "dev": "npm run dev-data & npm run dev-src",
     "dev-src": "webpack --env=dev",
     "dev-data": "tsc -w -p tsconfig-data.json",
-    "test": "npm run lint && nyc mocha -r ts-node/register src/**/__test/**/*.spec.ts",
+    "test": "npm run lint && npm run mocha",
     "lint": "tslint -p tsconfig.json -c tslint.yaml",
+    "mocha": "nyc mocha -r ts-node/register src/**/__test/**/*.spec.ts",
     "prettier": "prettier --write '**/*.{ts,tsx}'"
   },
   "husky": {
