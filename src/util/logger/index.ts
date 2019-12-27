@@ -1,4 +1,5 @@
 import DailyRotateFile from 'winston-daily-rotate-file';
+import * as Transport from 'winston-transport';
 
 // this require (instead of import) is to avoid including server side files in the client build
 const implementation = IS_SERVER ? require('./server') : require('./client');
@@ -28,6 +29,10 @@ export interface LoggerOptions {
    * Set to `null` to disable the limit
    */
   maxFiles?: number;
+  /**
+   * Extra transports to use (server side only)
+   */
+  transports?: Transport[];
 }
 
 export type LogFunction = (message: string) => void;
@@ -76,7 +81,7 @@ export const defaultOptions: LoggerOptions = {
  * Initializes the logging system with the provided options.
  * Then, an instance per namespace can be get using `getLogger`.
  */
-export declare function init(options?: LoggerOptions): void;
+export declare function init(options?: Partial<LoggerOptions>): void;
 
 /**
  * Get a namespaced logger. This binds the provided namespace to all logging functions

@@ -1,12 +1,12 @@
 import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { GameUi } from './model/ui';
+import { GameUi, GameUiConstructor } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
-import { logger } from './game-logger';
+import { logger, GameLogger } from './game-logger';
 import { Rng } from 'util/rng';
 
 interface GameOptions {
-  ui: GameUi;
+  Ui: GameUiConstructor;
   storiesFolders: string[];
 }
 
@@ -14,6 +14,8 @@ export class Game {
   protected readonly options: GameOptions;
   /** RNG system to use across subsystems */
   protected readonly rng: Rng;
+  /** UI to use */
+  protected ui!: GameUi;
   /** List of loaded stories */
   protected stories: Story[] = [];
   /** variables to share across stories */
@@ -31,6 +33,9 @@ export class Game {
     this.rng = new Rng();
   }
 
+  /**
+   * Validate the passed options to detect runtime errors
+   */
   public static validateOptions(options: GameOptions): string[] | null {
     const errors: string[] = [];
 
@@ -47,6 +52,15 @@ export class Game {
    * Initialize all the required resources
    */
   public async init(): Promise<void> {
+    this.ui = new this.options.Ui({
+      debug: true,
+      rng: this.rng,
+    });
+    const loggerTransports = this.ui.gameLog
+      ? [this.ui.gameLog.getTransport()]
+      : undefined;
+
+    GameLogger.init(loggerTransports);
     await this.loadStories(this.options.storiesFolders);
   }
 
@@ -54,11 +68,17 @@ export class Game {
    * Start the game cycle
    */
   public async start(): Promise<void> {
+    logger.game.start();
+    await this.ui.start();
+
     let story = this.selectStory();
     while (story) {
       await story.run(this.getStoryRunData(story.id));
       story = this.selectStory();
     }
+
+    logger.game.end();
+    await this.ui.end();
   }
 
   /**
@@ -79,9 +99,9 @@ export class Game {
           this.local[story.id] = {};
           this.stories.push(story);
           story.loaded(this.getStoryRunData(story.id));
-          logger.storyLoaded(story);
+          logger.story.loaded(story);
         } catch (errors) {
-          logger.errorLoadingStory(errors);
+          logger.story.errorLoading(errors);
         }
       });
     });
@@ -107,7 +127,7 @@ export class Game {
    */
   protected getStoryRunData(storyId: number): StoryRunData {
     return {
-      ui: this.options.ui,
+      ui: this.ui,
       global: this.global,
       local: this.local[storyId],
     };

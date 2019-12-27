@@ -9,13 +9,13 @@ interface InternalStoryData {
   source: string | undefined;
 }
 
-export interface StoryRunData<L extends {} = {}, G = unknown> {
+export interface StoryRunData<L extends {} = {}, G extends {} = {}> {
   ui: GameUi;
   global: G;
   local: L;
 }
 
-export interface StoryData<L extends {} = {}, G = unknown> {
+export interface StoryData<L extends {} = {}, G extends {} = {}> {
   name: string;
   onLoad: OnLoadCallback<L, G>;
   selectCondition: SelectConditionCallback<L, G>;
@@ -28,7 +28,7 @@ export interface StoryData<L extends {} = {}, G = unknown> {
  * Variables should be used within the `data` received in the callbacks instead of using
  * instance attributes, since the data will be stored and the attributes will not.
  */
-export class Story<L = any, G = any> {
+export class Story<L extends {} = {}, G extends {} = {}> {
   protected static idCounter = 0;
 
   public id: number;
@@ -52,7 +52,7 @@ export class Story<L = any, G = any> {
   }
 
   public async run(data: StoryRunData<L, G>): Promise<void> {
-    logger.runningStory(this);
+    logger.story.running((this as unknown) as Story);
     return this.runStory(data);
   }
 }

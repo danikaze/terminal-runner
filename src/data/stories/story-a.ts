@@ -4,6 +4,7 @@ const RUN_MAX_TIMES = 3;
 
 interface LocalData {
   run: number;
+  lastSelection: number;
 }
 
 export const story: StoryData<LocalData, never> = {
@@ -14,9 +15,15 @@ export const story: StoryData<LocalData, never> = {
   selectCondition: ({ local }) => {
     return local.run < RUN_MAX_TIMES;
   },
-  run: ({ local }) =>
-    new Promise<void>(resolve => {
+  run: ({ local, ui }) =>
+    new Promise<void>(async resolve => {
       local.run++;
+      local.lastSelection = await ui.userSelect([
+        { text: 'Option 1', data: 1 },
+        { text: 'Option 2', data: 2 },
+        { text: 'Option 3', data: 3 },
+      ]);
+
       resolve();
     }),
 };

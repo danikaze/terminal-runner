@@ -3,21 +3,20 @@
  */
 import { createLogger, transports, format, Logger as Winston } from 'winston';
 import * as DailyRotateFile from 'winston-daily-rotate-file';
-import { grey } from 'colors/safe';
 import { NsLogger, LoggerOptions, defaultOptions } from '.';
 
 const customFormat = format.printf(
   ({ level, message, timestamp, namespace }) => {
-    return `${timestamp ? `${timestamp} ` : ''}[${level} | ${grey(
-      namespace
-    )}] ${message}`;
+    return `${
+      timestamp ? `${timestamp} ` : ''
+    }[${level} | ${namespace}] ${message}`;
   }
 );
 
 let instance: Winston;
 const nsLoggers: { [namespace: string]: NsLogger } = {};
 
-export function init(options?: LoggerOptions): void {
+export function init(options?: Partial<LoggerOptions>): void {
   if (instance) {
     return;
   }
@@ -27,7 +26,7 @@ export function init(options?: LoggerOptions): void {
     ...options,
   };
 
-  const winstonTransports = [];
+  const winstonTransports = opt.transports || [];
 
   if (opt.console) {
     winstonTransports.push(new transports.Console());
@@ -41,7 +40,11 @@ export function init(options?: LoggerOptions): void {
     silent: opt.silent,
     level: opt.level,
     transports: winstonTransports,
-    format: format.combine(format.colorize(), format.timestamp(), customFormat),
+    format: format.combine(
+      format.colorize({ colors: { debug: 'magenta' } }),
+      format.timestamp(),
+      customFormat
+    ),
   });
 }
 

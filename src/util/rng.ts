@@ -89,7 +89,7 @@ export class Rng {
   /**
    * Returns a random value within the provided ones
    */
-  public pick<T>(values: T[]): T {
+  public pick<T>(values: T[]): T | undefined {
     return pick(this.engine, values);
   }
 
@@ -112,7 +112,6 @@ export class Rng {
         return option.data;
       }
     }
-    return values[values.length - 1].data;
   }
 
   /**
