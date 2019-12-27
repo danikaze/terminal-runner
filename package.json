@@ -75,6 +75,7 @@
     "blessed-contrib": "^4.8.18",
     "colors": "^1.4.0",
     "random-js": "^2.1.0",
+    "vanilla-type-check": "^2.0.3",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^4.4.0",
     "winston-transport": "^4.3.0"
