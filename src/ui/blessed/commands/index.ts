@@ -16,8 +16,8 @@ const commandMap: {
     addMessage('Console keys:');
     addMessage(' [ {yellow-fg}`{/yellow-fg} ] Toggle the log/terminal');
     // addMessage(' [ {yellow-fg}TAB{/yellow-fg} ] Auto-complete');
-    // addMessage(' [ {yellow-fg}C-⬆︎{/yellow-fg} ] Previous command');
-    // addMessage(' [ {yellow-fg}C-⬇︎{/yellow-fg} ] Next command');
+    addMessage(' [ {yellow-fg}C-⬆︎{/yellow-fg} ] Previous command');
+    addMessage(' [ {yellow-fg}C-⬇︎{/yellow-fg} ] Next command');
     addMessage(' [ {yellow-fg}S-⬆︎{/yellow-fg} ] Shrink terminal');
     addMessage(' [ {yellow-fg}S-⬇︎{/yellow-fg} ] Expand terminal');
     addMessage(' [ {yellow-fg}⬆︎{/yellow-fg} ] Scroll log messages up');

@@ -34,16 +34,34 @@ export class Log {
     shift: true,
     ctrl: false,
   };
+  protected static readonly keyDefCommandHistoryPrev: KeyDeclaration = {
+    key: 'up',
+    shift: false,
+    ctrl: true,
+  };
+  protected static readonly keyDefCommandHistoryNext: KeyDeclaration = {
+    key: 'down',
+    shift: false,
+    ctrl: true,
+  };
 
   protected readonly screen: blessed.Widgets.Screen;
   protected readonly onInput?: (command: string) => void;
   protected readonly toggleChar: string;
+  protected isVisible: boolean = false;
 
+  // blessed elements
   protected readonly logBox: blessed.Widgets.TextElement;
   protected readonly inputBox?: blessed.Widgets.TextareaElement;
+
+  // log messages related variables
   protected readonly messages: string[] = [];
   protected lastLine = 0;
-  protected isVisible: boolean = false;
+
+  // command history related variables
+  protected readonly commandHistory: string[] = [];
+  protected commandIndex = 0;
+  protected commandBuffer = '';
 
   constructor(options: LogOptions) {
     this.screen = options.screen;
@@ -73,11 +91,15 @@ export class Log {
       });
       this.logBox.append(this.inputBox);
       this.inputBox.on('keypress', (char, key) => {
-        if (this.processKeyEvents(char, key) === false) {
+        if (!this.processKeyEvents(char, key)) {
           return;
-        } else if (key.name === 'enter') {
-          this.onInput!(this.inputBox!.getValue().trim());
+        }
+
+        if (key.name === 'enter') {
+          const command = this.inputBox!.getValue().trim();
+          this.onInput!(command);
           this.inputBox!.setValue('');
+          this.addCommandHistory(command);
         } else if (char === this.toggleChar || key === 'escape') {
           this.inputBox!.cancel();
           this.hide();
@@ -168,6 +190,29 @@ export class Log {
     this.updateContent();
   }
 
+  protected selectCommandHistory(delta: number): void {
+    const nCommands = this.commandHistory.length;
+    // if it's currently editing, save the buffer
+    if (this.commandIndex === nCommands) {
+      this.commandBuffer = this.inputBox!.getValue();
+    }
+    this.commandIndex = clamp(this.commandIndex + delta, 0, nCommands);
+    this.inputBox!.setValue(
+      this.commandHistory[this.commandIndex] || this.commandBuffer
+    );
+    this.screen.render();
+  }
+
+  protected addCommandHistory(command: string): void {
+    if (!command) return;
+
+    const nCommands = this.commandHistory.length;
+    if (this.commandHistory[nCommands - 1] !== command) {
+      this.commandHistory.push(command);
+      this.commandIndex = nCommands + 1;
+    }
+  }
+
   /**
    * Process the key events.
    * Returns `false` if handled to prevent event bubbling
@@ -184,6 +229,10 @@ export class Log {
       this.scroll(-1);
     } else if (compareKey(Log.keyDefScrollDown, char, key)) {
       this.scroll(1);
+    } else if (compareKey(Log.keyDefCommandHistoryPrev, char, key)) {
+      this.selectCommandHistory(-1);
+    } else if (compareKey(Log.keyDefCommandHistoryNext, char, key)) {
+      this.selectCommandHistory(1);
     }
 
     return true;
