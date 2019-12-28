@@ -3,11 +3,21 @@ import { clamp } from 'util/clamp';
 import { KeyDeclaration, compareKey } from 'ui/blessed/util/keys';
 
 export interface LogOptions {
+  /** blessed screen where to render the widget */
   screen: blessed.Widgets.Screen;
+  /**
+   * Function to call when a command has been input,
+   * specifying this enables the command input line
+   */
   onInput?: (command: string) => void;
+  /** function to call when the autocomplete key has been triggered */
   onAutocomplete?: (text: string) => string;
 }
 
+/**
+ * Log acts as a terminal window like the ones in the original Quake.
+ * It presents the log messages and also a command input line if enabled.
+ */
 export class Log {
   /** Minimum size of the Log box (2 lines are for the borders) */
   protected static readonly MIN_SIZE = 5;
@@ -136,20 +146,33 @@ export class Log {
     this.screen.key([Log.TOGGLE_CHAR], () => this.toggle());
   }
 
+  /**
+   * Shows the widget
+   */
   public async show(): Promise<void> {
+    if (this.isVisible) return;
+
     this.isVisible = true;
     this.screen.append(this.logBox);
     (this.inputBox ? this.inputBox : this.logBox).focus();
     this.screen.render();
   }
 
+  /**
+   * Hides the widget
+   */
   public async hide(): Promise<void> {
+    if (!this.isVisible) return;
+
     this.isVisible = false;
     this.screen.restoreFocus();
     this.screen.remove(this.logBox);
     this.screen.render();
   }
 
+  /**
+   * Toggles the widget between shown/hidden
+   */
   public async toggle(): Promise<void> {
     if (this.isVisible) {
       this.hide();
@@ -158,6 +181,9 @@ export class Log {
     }
   }
 
+  /**
+   * Adds a text in the log area
+   */
   public addMessage(text: string): void {
     if (this.lastLine === this.messages.length) {
       this.lastLine++;
@@ -171,6 +197,9 @@ export class Log {
     this.updateContent();
   }
 
+  /**
+   * Method that re-renders the widget (log messages) based in the content
+   */
   protected updateContent(): void {
     const lines =
       (this.logBox.height as number) -
@@ -185,6 +214,9 @@ export class Log {
     }
   }
 
+  /**
+   * Change the height of the widget by the specified number of lines
+   */
   protected updateSize(delta: number): void {
     const oldSize = this.logBox.height as number;
 
@@ -200,6 +232,9 @@ export class Log {
     this.scroll(0, true);
   }
 
+  /**
+   * Scroll up (<0) or down (>0) the log messages area by the specified number of lines
+   */
   protected scroll(delta: number, force?: boolean): void {
     const oldLastLine = this.lastLine;
     const maxLine = this.messages.length;
@@ -218,6 +253,10 @@ export class Log {
     this.updateContent();
   }
 
+  /**
+   * Navigate between the history of commands by the specified number of commands,
+   * being -1 the previous one, and +1 the next one
+   */
   protected selectCommandHistory(delta: number): void {
     const nCommands = this.commandHistory.length;
     // if it's currently editing, save the buffer
@@ -231,6 +270,9 @@ export class Log {
     this.screen.render();
   }
 
+  /**
+   * Add a command to the list of command history
+   */
   protected addCommandHistory(command: string): void {
     if (!command) return;
 
