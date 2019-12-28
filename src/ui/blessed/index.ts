@@ -5,7 +5,7 @@ import { GameUi, InitData, SelectData, SelectOptions } from 'engine/model/ui';
 import { logger } from 'engine/game-logger';
 import { Rng } from 'util/rng';
 import { Log } from './widgets/log';
-import { processCommand } from './commands';
+import { autocompleteCommand, processCommand } from './commands';
 
 export class TerminalUi implements GameUi {
   public gameLog = {
@@ -53,8 +53,9 @@ export class TerminalUi implements GameUi {
         if (!trimmedCommand) {
           return;
         }
-        processCommand(trimmedCommand, this.log!.addMessage.bind(this.log));
+        processCommand(trimmedCommand, this.log!);
       },
+      onAutocomplete: text => autocompleteCommand(text, this.log!),
     });
   }
 

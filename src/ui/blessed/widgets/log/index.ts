@@ -5,7 +5,7 @@ import { KeyDeclaration, compareKey } from 'ui/blessed/util/keys';
 export interface LogOptions {
   screen: blessed.Widgets.Screen;
   onInput?: (command: string) => void;
-  toggleChar?: string;
+  onAutocomplete?: (text: string) => string;
 }
 
 export class Log {
@@ -13,6 +13,10 @@ export class Log {
   protected static readonly MIN_SIZE = 5;
   /** When resizing, number of lines to left uncover in the bottom */
   protected static readonly MIN_MARGIN_BOTTOM = 5;
+  /** Key used for showing or hiding the Log widget */
+  protected static readonly TOGGLE_CHAR = '`';
+  /** Key used to trigger the autocomplete function if provided */
+  protected static readonly AUTOCOMPLETE_KEY = 'tab';
 
   protected static readonly keyDefScrollUp: KeyDeclaration = {
     key: 'up',
@@ -47,7 +51,6 @@ export class Log {
 
   protected readonly screen: blessed.Widgets.Screen;
   protected readonly onInput?: (command: string) => void;
-  protected readonly toggleChar: string;
   protected isVisible: boolean = false;
 
   // blessed elements
@@ -63,10 +66,12 @@ export class Log {
   protected commandIndex = 0;
   protected commandBuffer = '';
 
+  // command autocompletion
+  protected readonly onAutocomplete?: (text: string) => string;
+
   constructor(options: LogOptions) {
     this.screen = options.screen;
     this.onInput = options.onInput;
-    this.toggleChar = options.toggleChar || '`';
     this.logBox = blessed.text({
       tags: true,
       border: { type: 'line' },
@@ -81,6 +86,7 @@ export class Log {
     this.logBox.on('keypress', this.processKeyEvents.bind(this));
 
     if (this.onInput) {
+      this.onAutocomplete = options.onAutocomplete;
       this.inputBox = blessed.textarea({
         height: 1,
         bottom: 0,
@@ -95,22 +101,39 @@ export class Log {
           return;
         }
 
-        if (key.name === 'enter') {
-          const command = this.inputBox!.getValue().trim();
-          this.onInput!(command);
-          this.inputBox!.setValue('');
-          this.addCommandHistory(command);
-        } else if (char === this.toggleChar || key === 'escape') {
+        if (char === Log.TOGGLE_CHAR || key === 'escape') {
           this.inputBox!.cancel();
           this.hide();
         }
       });
+
+      this.inputBox.key('enter', () => {
+        const command = this.inputBox!.getValue().trim();
+        this.onInput!(command);
+        this.inputBox!.setValue('');
+        this.addCommandHistory(command);
+      });
+
+      if (this.onAutocomplete) {
+        this.inputBox.key('tab', () => {
+          const original = this.inputBox!.getValue().trim();
+          const value = this.onAutocomplete!(original);
+          if (value) {
+            this.inputBox!.setValue(value);
+          } else {
+            this.inputBox!.setValue(original);
+          }
+          this.screen.render();
+          return false;
+        });
+      }
+
       this.inputBox.on('focus', () => {
         this.inputBox!.readInput();
       });
     }
 
-    this.screen.key([this.toggleChar], () => this.toggle());
+    this.screen.key([Log.TOGGLE_CHAR], () => this.toggle());
   }
 
   public async show(): Promise<void> {
@@ -140,6 +163,11 @@ export class Log {
       this.lastLine++;
     }
     this.messages.push(text);
+    this.updateContent();
+  }
+
+  public clear(): void {
+    this.messages.splice(0, this.messages.length);
     this.updateContent();
   }
 
