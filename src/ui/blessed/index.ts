@@ -5,6 +5,7 @@ import { GameUi, InitData, SelectData, SelectOptions } from 'engine/model/ui';
 import { logger } from 'engine/game-logger';
 import { Rng } from 'util/rng';
 import { Log } from './widgets/log';
+import { autocompleteCommand, processCommand } from './commands';
 
 export class TerminalUi implements GameUi {
   public gameLog = {
@@ -45,7 +46,17 @@ export class TerminalUi implements GameUi {
       return;
     }
 
-    this.log = new Log(this.screen);
+    this.log = new Log({
+      screen: this.screen,
+      onInput: command => {
+        const trimmedCommand = command.trim();
+        if (!trimmedCommand) {
+          return;
+        }
+        processCommand(trimmedCommand, this.log!);
+      },
+      onAutocomplete: text => autocompleteCommand(text, this.log!),
+    });
   }
 
   public async start(): Promise<void> {
@@ -57,7 +68,7 @@ export class TerminalUi implements GameUi {
       if (this.log) {
         logger.msg(
           'debug',
-          'Press [{yellow-fg}Esc{/yellow-fg}|{yellow-fg}Q{/yellow-fg}|{yellow-fg}C-c{/yellow-fg}] to exit...'
+          'Press [{yellow-fg}Esc{/yellow-fg}|{yellow-fg}Q{/yellow-fg}|{yellow-fg}C-c{/yellow-fg}] or execute {yellow-fg}/exit{/yellow-fg} to quit the program...'
         );
       }
       return;

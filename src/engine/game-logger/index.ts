@@ -26,7 +26,6 @@ export class GameLogger {
       transports: extraTransports,
     });
     logger = new GameLogger();
-    logger.showLoggerFormats();
   }
 
   public showLoggerFormats() {
