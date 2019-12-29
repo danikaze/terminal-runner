@@ -2,16 +2,16 @@ import * as Transport from 'winston-transport';
 import { default as logSystem, NsLogger, LoggerLevel } from 'util/logger';
 import { GameSystemLogger } from './game';
 import { StoryLogger } from './story';
+import { UiLogger } from './ui';
 
 export class GameLogger {
   public readonly global: NsLogger;
-  public readonly game: GameSystemLogger;
-  public readonly story: StoryLogger;
+  public readonly game = new GameSystemLogger();
+  public readonly story = new StoryLogger();
+  public readonly ui = new UiLogger();
 
   constructor() {
     this.global = logSystem.getLogger('global');
-    this.game = new GameSystemLogger();
-    this.story = new StoryLogger();
     this.global.info('GameLogger initializated');
   }
 

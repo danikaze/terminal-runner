@@ -6,6 +6,7 @@ import { logger } from 'engine/game-logger';
 import { Rng } from 'util/rng';
 import { Log } from './widgets/log';
 import { autocompleteCommand, processCommand } from './commands';
+import { Select } from './widgets/select';
 
 export class TerminalUi implements GameUi {
   public gameLog = {
@@ -66,10 +67,7 @@ export class TerminalUi implements GameUi {
   public async end(): Promise<void> {
     if (this.isDebugModeEnabled) {
       if (this.log) {
-        logger.msg(
-          'debug',
-          'Press [{yellow-fg}Esc{/yellow-fg}|{yellow-fg}Q{/yellow-fg}|{yellow-fg}C-c{/yellow-fg}] or execute {yellow-fg}/exit{/yellow-fg} to quit the program...'
-        );
+        logger.ui.gameEnd();
       }
       return;
     }
@@ -81,15 +79,20 @@ export class TerminalUi implements GameUi {
     options?: SelectOptions<T>
   ): Promise<T> {
     return new Promise<T>(resolve => {
-      const selectOptions =
+      const items =
         options && options.randomSort ? this.rng.shuffle(data) : data;
 
-      setTimeout(() => {
-        const option = this.rng.pick(selectOptions);
-        resolve(option && option.data);
-        // tslint:disable-next-line: no-magic-numbers
-      }, 500);
-      this.screen.render();
+      new Select({
+        text: options && options.text,
+        items: items as NonEmptyArray<SelectData<T>>,
+        screen: this.screen,
+        selected: options && options.selected,
+        timeLimit: options && options.timeLimit,
+        onSelect: data => {
+          logger.ui.userSelect(data);
+          resolve(data);
+        },
+      });
     });
   }
 }
