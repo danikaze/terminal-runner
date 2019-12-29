@@ -66,10 +66,7 @@ export class TerminalUi implements GameUi {
   public async end(): Promise<void> {
     if (this.isDebugModeEnabled) {
       if (this.log) {
-        logger.msg(
-          'debug',
-          'Press [{yellow-fg}Esc{/yellow-fg}|{yellow-fg}Q{/yellow-fg}|{yellow-fg}C-c{/yellow-fg}] or execute {yellow-fg}/exit{/yellow-fg} to quit the program...'
-        );
+        logger.ui.gameEnd();
       }
       return;
     }
@@ -86,7 +83,8 @@ export class TerminalUi implements GameUi {
 
       setTimeout(() => {
         const option = this.rng.pick(selectOptions);
-        resolve(option && option.data);
+        logger.ui.userSelect(option!.data);
+        resolve(option!.data);
         // tslint:disable-next-line: no-magic-numbers
       }, 500);
       this.screen.render();
