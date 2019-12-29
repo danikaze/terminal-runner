@@ -74,7 +74,7 @@ export class TerminalUi implements GameUi {
     process.exit(0);
   }
 
-  public async userSelect<T>(
+  public userSelect<T>(
     data: NonEmptyArray<SelectData<T>>,
     options?: SelectOptions<T>
   ): Promise<T> {
