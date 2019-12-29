@@ -4,9 +4,13 @@ import { TerminalUi } from 'ui/blessed';
 import { getAppPath } from 'util/get-app-path';
 
 async function run() {
+  const storiesFolder = join(getAppPath() || '', 'data', 'stories');
   const game = new Game({
     Ui: TerminalUi,
-    storiesFolders: [join(getAppPath() || '', 'data', 'stories')],
+    storiesFolders: [
+      // storiesFolder,
+      join(storiesFolder, 'test'),
+    ],
   });
 
   await game.init();

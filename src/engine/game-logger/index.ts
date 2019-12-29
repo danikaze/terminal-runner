@@ -6,12 +6,14 @@ import { UiLogger } from './ui';
 
 export class GameLogger {
   public readonly global: NsLogger;
+  public readonly data: NsLogger;
   public readonly game = new GameSystemLogger();
   public readonly story = new StoryLogger();
   public readonly ui = new UiLogger();
 
   constructor() {
     this.global = logSystem.getLogger('global');
+    this.data = logSystem.getLogger('data');
     this.global.info('GameLogger initializated');
   }
 

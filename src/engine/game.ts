@@ -130,6 +130,7 @@ export class Game {
       ui: this.ui,
       global: this.global,
       local: this.local[storyId],
+      logger: logger.data,
     };
   }
 }
