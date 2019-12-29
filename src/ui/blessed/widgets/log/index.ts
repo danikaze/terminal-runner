@@ -25,6 +25,8 @@ export class Log {
   protected static readonly MIN_MARGIN_BOTTOM = 5;
   /** Key used for showing or hiding the Log widget */
   protected static readonly TOGGLE_CHAR = '`';
+  /** Key used for cancelling the command input */
+  protected static readonly CANCEL_KEY = 'escape';
   /** Key used to trigger the autocomplete function if provided */
   protected static readonly AUTOCOMPLETE_KEY = 'tab';
 
@@ -106,16 +108,9 @@ export class Log {
         },
       });
       this.logBox.append(this.inputBox);
-      this.inputBox.on('keypress', (char, key) => {
-        if (!this.processKeyEvents(char, key)) {
-          return;
-        }
-
-        if (char === Log.TOGGLE_CHAR || key === 'escape') {
-          this.inputBox!.cancel();
-          this.hide();
-        }
-      });
+      this.inputBox.on('keypress', (char, key) =>
+        this.processKeyEvents(char, key, true)
+      );
 
       this.inputBox.key('enter', () => {
         const command = this.inputBox!.getValue().trim();
@@ -125,7 +120,7 @@ export class Log {
       });
 
       if (this.onAutocomplete) {
-        this.inputBox.key('tab', () => {
+        this.inputBox.key(Log.AUTOCOMPLETE_KEY, () => {
           const original = this.inputBox!.getValue().trim();
           const value = this.onAutocomplete!(original);
           if (value) {
@@ -154,6 +149,7 @@ export class Log {
 
     this.isVisible = true;
     this.screen.append(this.logBox);
+    this.screen.saveFocus();
     (this.inputBox ? this.inputBox : this.logBox).focus();
     this.screen.render();
   }
@@ -289,20 +285,45 @@ export class Log {
    */
   protected processKeyEvents(
     char: string,
-    key: blessed.Widgets.Events.IKeyEventArg
+    key: blessed.Widgets.Events.IKeyEventArg,
+    fromInputBox?: boolean
   ): boolean {
     if (compareKey(Log.keyDefTerminalExpand, char, key)) {
       this.updateSize(1);
-    } else if (compareKey(Log.keyDefTerminalShrink, char, key)) {
+      return false;
+    }
+
+    if (compareKey(Log.keyDefTerminalShrink, char, key)) {
       this.updateSize(-1);
-    } else if (compareKey(Log.keyDefScrollUp, char, key)) {
+      return false;
+    }
+
+    if (compareKey(Log.keyDefScrollUp, char, key)) {
       this.scroll(-1);
-    } else if (compareKey(Log.keyDefScrollDown, char, key)) {
+      return false;
+    }
+
+    if (compareKey(Log.keyDefScrollDown, char, key)) {
       this.scroll(1);
-    } else if (compareKey(Log.keyDefCommandHistoryPrev, char, key)) {
+      return false;
+    }
+
+    if (compareKey(Log.keyDefCommandHistoryPrev, char, key)) {
       this.selectCommandHistory(-1);
-    } else if (compareKey(Log.keyDefCommandHistoryNext, char, key)) {
+      return false;
+    }
+
+    if (compareKey(Log.keyDefCommandHistoryNext, char, key)) {
       this.selectCommandHistory(1);
+      return false;
+    }
+
+    if (
+      fromInputBox &&
+      (char === Log.TOGGLE_CHAR || key.name === Log.CANCEL_KEY)
+    ) {
+      this.inputBox!.cancel();
+      this.hide();
     }
 
     return true;
