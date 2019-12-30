@@ -11,10 +11,7 @@ async function run() {
   const game = new Game({
     debug,
     Ui: TerminalUi,
-    storiesFolders: [
-      // storiesFolder,
-      join(storiesFolder, 'test'),
-    ],
+    storiesFolders: [join(storiesFolder, 'test')],
   });
 
   await game.init();

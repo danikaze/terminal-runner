@@ -36,9 +36,14 @@ export class Game {
     'save'
   );
 
-  protected readonly options: GameOptions;
   /** RNG system to use across subsystems */
-  protected readonly rng: Rng;
+  public readonly rng: Rng;
+
+  protected readonly uiConstructor: GameUiConstructor;
+  protected readonly storiesFolder: string[];
+  protected readonly savegamesFolder: string;
+  protected readonly isDebugModeEnabled: boolean;
+
   /** UI to use */
   protected ui!: GameUi;
   /** List of loaded stories */
@@ -54,7 +59,12 @@ export class Game {
       throw new Error(errors.join('\n'));
     }
 
+    this.storiesFolder =
+      !options.storiesFolders || options.storiesFolders.length === 0
+        ? [Game.STORY_FOLDER]
+        : options.storiesFolders;
     this.savegamesFolder = options.savegamesFolder || Game.SAVEGAME_FOLDER;
+    this.uiConstructor = options.Ui;
     this.isDebugModeEnabled = !!options.debug;
     this.rng = new Rng();
   }
@@ -64,15 +74,19 @@ export class Game {
    */
   public static validateOptions(options: GameOptions): string[] | null {
     const errors: string[] = [];
-    if (!options.storiesFolders || options.storiesFolders.length === 0) {
-      options.storiesFolders = [Game.STORY_FOLDER];
+    const { storiesFolders, savegamesFolder } = options;
+
+    if (storiesFolders) {
+      storiesFolders.forEach(folder => {
+        if (!existsSync(folder)) {
+          errors.push(`Stories folder (${folder}) doesn't exist`);
+        }
+      });
     }
 
-    options.storiesFolders.forEach(folder => {
-      if (!existsSync(folder)) {
-        errors.push(`Stories folder (${folder}) doesn't exist`);
-      }
-    });
+    if (savegamesFolder && !existsSync(savegamesFolder)) {
+      errors.push(`Savegames folder (${savegamesFolder}) doesn't exist`);
+    }
 
     return errors.length === 0 ? null : errors;
   }
@@ -90,7 +104,7 @@ export class Game {
       : undefined;
 
     GameLogger.init(loggerTransports);
-    await this.loadStories(this.options.storiesFolders!);
+    await this.loadStories(this.storiesFolder);
   }
 
   /**
