@@ -45,7 +45,7 @@ export class Game {
   protected readonly isDebugModeEnabled: boolean;
 
   /** UI to use */
-  protected ui!: GameUi;
+  protected readonly ui: GameUi;
   /** List of loaded stories */
   protected stories: Story[] = [];
   /** variables to share across stories */
@@ -59,6 +59,7 @@ export class Game {
       throw new Error(errors.join('\n'));
     }
 
+    // attributes
     this.storiesFolder =
       !options.storiesFolders || options.storiesFolders.length === 0
         ? [Game.STORY_FOLDER]
@@ -66,7 +67,13 @@ export class Game {
     this.savegamesFolder = options.savegamesFolder || Game.SAVEGAME_FOLDER;
     this.uiConstructor = options.Ui;
     this.isDebugModeEnabled = !!options.debug;
+
+    // instances
     this.rng = new Rng();
+    this.ui = new this.uiConstructor({
+      game: this,
+      debug: this.isDebugModeEnabled,
+    });
   }
 
   /**
@@ -95,15 +102,12 @@ export class Game {
    * Initialize all the required resources
    */
   public async init(): Promise<void> {
-    this.ui = new this.uiConstructor({
-      game: this,
-      debug: this.isDebugModeEnabled,
-    });
     const loggerTransports = this.ui.gameLog
       ? [this.ui.gameLog.getTransport()]
       : undefined;
 
     GameLogger.init(loggerTransports);
+
     await this.loadStories(this.storiesFolder);
   }
 
