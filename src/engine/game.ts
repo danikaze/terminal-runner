@@ -8,6 +8,7 @@ import { Rng } from 'util/rng';
 interface GameOptions {
   Ui: GameUiConstructor;
   storiesFolders: string[];
+  debug?: boolean;
 }
 
 export class Game {
@@ -53,7 +54,7 @@ export class Game {
    */
   public async init(): Promise<void> {
     this.ui = new this.options.Ui({
-      debug: true,
+      debug: this.options.debug,
       rng: this.rng,
     });
     const loggerTransports = this.ui.gameLog

@@ -10,7 +10,7 @@ export interface LogOptions {
    * specifying this enables the command input line
    */
   onInput?: (command: string) => void;
-  /** function to call when the autocomplete key has been triggered */
+  /** Function to call when the autocomplete key has been triggered */
   onAutocomplete?: (text: string) => string;
 }
 
@@ -143,14 +143,18 @@ export class Log {
 
   /**
    * Shows the widget
+   *
+   * @param focused If set to `false`, the widget won't get the focus when displayed
    */
-  public async show(): Promise<void> {
+  public async show(focused?: boolean): Promise<void> {
     if (this.isVisible) return;
 
     this.isVisible = true;
     this.screen.append(this.logBox);
-    this.screen.saveFocus();
-    (this.inputBox ? this.inputBox : this.logBox).focus();
+    if (focused !== false) {
+      this.screen.saveFocus();
+      (this.inputBox ? this.inputBox : this.logBox).focus();
+    }
     this.screen.render();
   }
 
@@ -168,12 +172,15 @@ export class Log {
 
   /**
    * Toggles the widget between shown/hidden
+   *
+   * @param focused If set to `false`, the widget won't get the focus when displayed
+   *                (not used when hidden)
    */
-  public async toggle(): Promise<void> {
+  public async toggle(focused?: boolean): Promise<void> {
     if (this.isVisible) {
       this.hide();
     } else {
-      this.show();
+      this.show(focused);
     }
   }
 
