@@ -8,7 +8,7 @@
     "start-dev": "node --inspect-brk app/index.js --debug",
     "build": "npm run build-src && npm run build-data",
     "build-src": "webpack",
-    "build-data": "tsc -p tsconfig-data.json && rimraf app/engine",
+    "build-data": "tsc -p tsconfig-data.json && rimraf app/engine app/util",
     "dev": "npm run dev-data & npm run dev-src",
     "dev-src": "webpack --env=dev",
     "dev-data": "tsc -w -p tsconfig-data.json",
