@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { GameUi, GameUiConstructor } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
@@ -12,6 +12,7 @@ interface GameOptions {
 }
 
 export class Game {
+  /** Extension for the story files */
   protected static readonly STORY_EXT = 'story.js';
 
   protected readonly options: GameOptions;
@@ -85,18 +86,25 @@ export class Game {
   }
 
   /**
-   * Load the stories from the specified folders
+   * Load the stories from the specified folders recursively
    * Only files ending with `Game.STORY_EXT` will be loaded
    */
   protected async loadStories(folders: string[]): Promise<void> {
     folders.forEach(folder => {
-      readdirSync(folder).forEach(file => {
+      readdirSync(folder).forEach(async file => {
+        const filePath = join(folder, file);
+
+        if (statSync(filePath).isDirectory()) {
+          await this.loadStories([filePath]);
+          return;
+        }
+
         if (!file.endsWith(Game.STORY_EXT)) {
           return;
         }
 
         try {
-          const storyData = __non_webpack_require__(join(folder, file))
+          const storyData = __non_webpack_require__(filePath)
             .story as StoryData;
           const internal = { source: `${folder}/${file}` };
           const story = new Story(internal, storyData);
