@@ -15,6 +15,10 @@ export class GameLogger {
     this.global = logSystem.getLogger('global');
     this.data = logSystem.getLogger('data');
     this.global.info('GameLogger initializated');
+    this.global.verbose(
+      `Running version {yellow-fg}${APP_VERSION}{/yellow-fg} built from ` +
+        `branch {blue-fg}${GIT_BRANCH}{/blue-fg}:{green-fg}${GIT_VERSION}{/green-fg}`
+    );
   }
 
   public static init(extraTransports?: Transport[]) {

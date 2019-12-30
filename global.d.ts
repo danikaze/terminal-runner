@@ -4,6 +4,9 @@ declare const IS_SERVER: string;
 
 // Globals from webpack
 declare const IS_PRODUCTION: boolean;
+declare const GIT_VERSION: string;
+declare const GIT_COMMITHASH: string;
+declare const GIT_BRANCH: string;
 declare const __non_webpack_require__: NodeRequireFunction;
 
 // Shared Interfaces
