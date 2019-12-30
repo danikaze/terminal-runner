@@ -12,6 +12,8 @@ interface GameOptions {
 }
 
 export class Game {
+  protected static readonly STORY_EXT = 'story.js';
+
   protected readonly options: GameOptions;
   /** RNG system to use across subsystems */
   protected readonly rng: Rng;
@@ -83,12 +85,13 @@ export class Game {
   }
 
   /**
-   * Load the stories from the specified folder
+   * Load the stories from the specified folders
+   * Only files ending with `Game.STORY_EXT` will be loaded
    */
   protected async loadStories(folders: string[]): Promise<void> {
     folders.forEach(folder => {
       readdirSync(folder).forEach(file => {
-        if (!file.endsWith('.js')) {
+        if (!file.endsWith(Game.STORY_EXT)) {
           return;
         }
 
