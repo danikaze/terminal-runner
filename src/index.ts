@@ -7,7 +7,7 @@ const PARAM_DEBUG_MODE = '--debug';
 
 async function run() {
   const debug = process.argv.includes(PARAM_DEBUG_MODE);
-  const storiesFolder = join(getAppPath() || '', 'data', 'stories');
+  const storiesFolder = join(getAppPath(), 'data', 'stories');
   const game = new Game({
     debug,
     Ui: TerminalUi,

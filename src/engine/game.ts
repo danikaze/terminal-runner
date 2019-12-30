@@ -25,13 +25,13 @@ export class Game {
   protected static readonly STORY_EXT = 'story.js';
   /** Default folder for the stories */
   protected static readonly STORY_FOLDER = join(
-    getAppPath() || '',
+    getAppPath(),
     'data',
     'stories'
   );
   /** Default folder for the savegame files */
   protected static readonly SAVEGAME_FOLDER = join(
-    getAppPath() || '',
+    getAppPath(),
     'data',
     'save'
   );
@@ -217,7 +217,7 @@ export class Game {
    * Only files ending with `Game.STORY_EXT` will be loaded
    */
   protected async loadStories(folders: string[]): Promise<void> {
-    const appPath = getAppPath() || '';
+    const appPath = getAppPath();
 
     folders.forEach(folder => {
       readdirSync(folder).forEach(async file => {
