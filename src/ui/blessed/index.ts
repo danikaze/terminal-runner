@@ -16,16 +16,16 @@ export class TerminalUi implements GameUi {
       });
     },
     show: async (): Promise<void> => {
-      return (this.log as Log).show();
+      return this.log.show();
     },
     hide: async (): Promise<void> => {
-      return (this.log as Log).hide();
+      return this.log.hide();
     },
     toggle: async (): Promise<void> => {
-      return (this.log as Log).toggle();
+      return this.log.toggle();
     },
     addLog: (info: LogData): void => {
-      (this.log as Log).addMessage(info[SYMBOL_MESSAGE]);
+      this.log.addMessage(info[SYMBOL_MESSAGE]);
     },
   };
 
@@ -33,7 +33,7 @@ export class TerminalUi implements GameUi {
   private readonly isDebugModeEnabled: boolean;
   private readonly screen: blessed.Widgets.Screen;
 
-  private readonly log?: Log;
+  private readonly log: Log;
 
   constructor(data: InitData) {
     this.rng = data.rng;
@@ -43,21 +43,22 @@ export class TerminalUi implements GameUi {
 
     this.screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
 
-    if (!this.isDebugModeEnabled) {
-      return;
-    }
-
     this.log = new Log({
       screen: this.screen,
-      onInput: command => {
-        const trimmedCommand = command.trim();
-        if (!trimmedCommand) {
-          return;
-        }
-        processCommand(trimmedCommand, this.log!);
-      },
+      onInput: this.isDebugModeEnabled
+        ? command => {
+            const trimmedCommand = command.trim();
+            if (!trimmedCommand) {
+              return;
+            }
+            processCommand(trimmedCommand, this.log!);
+          }
+        : undefined,
       onAutocomplete: text => autocompleteCommand(text, this.log!),
     });
+    if (this.isDebugModeEnabled) {
+      this.log.show(false);
+    }
   }
 
   public async start(): Promise<void> {

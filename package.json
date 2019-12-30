@@ -4,8 +4,8 @@
   "description": "Terminal based game",
   "main": "src/index.js",
   "scripts": {
-    "start": "node app/index.js",
-    "start-dev": "node --inspect-brk app/index.js",
+    "start": "node app/index.js --debug",
+    "start-dev": "node --inspect-brk app/index.js --debug",
     "build": "npm run build-src && npm run build-data",
     "build-src": "webpack",
     "build-data": "tsc -p tsconfig-data.json && rimraf app/engine",

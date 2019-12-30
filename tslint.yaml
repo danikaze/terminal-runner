@@ -189,13 +189,6 @@ rules:
     - 2
     - 1000
 
-  # https://github.com/buzinas/tslint-eslint-rules/blob/master/src/docs/rules/terIndentRule.md
-  # builtin in tslint not really working :( https://github.com/palantir/tslint/issues/2814
-  ter-indent:
-    - true
-    - 2
-    - SwitchCase: 1
-
   # https://palantir.github.io/tslint/rules/whitespace/
   whitespace:
     - true
