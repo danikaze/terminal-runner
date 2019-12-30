@@ -4,16 +4,23 @@ import { GameUi, GameUiConstructor } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
 import { logger, GameLogger } from './game-logger';
 import { Rng } from 'util/rng';
+import { getAppPath } from 'util/get-app-path';
 
 interface GameOptions {
   Ui: GameUiConstructor;
-  storiesFolders: string[];
+  storiesFolders?: string[];
   debug?: boolean;
 }
 
 export class Game {
   /** Extension for the story files */
   protected static readonly STORY_EXT = 'story.js';
+  /** Default folder for the stories */
+  protected static readonly STORY_FOLDER = join(
+    getAppPath() || '',
+    'data',
+    'stories'
+  );
 
   protected readonly options: GameOptions;
   /** RNG system to use across subsystems */
@@ -42,6 +49,9 @@ export class Game {
    */
   public static validateOptions(options: GameOptions): string[] | null {
     const errors: string[] = [];
+    if (!options.storiesFolders || options.storiesFolders.length === 0) {
+      options.storiesFolders = [Game.STORY_FOLDER];
+    }
 
     options.storiesFolders.forEach(folder => {
       if (!existsSync(folder)) {
@@ -65,7 +75,7 @@ export class Game {
       : undefined;
 
     GameLogger.init(loggerTransports);
-    await this.loadStories(this.options.storiesFolders);
+    await this.loadStories(this.options.storiesFolders!);
   }
 
   /**
