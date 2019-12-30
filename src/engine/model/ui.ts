@@ -1,9 +1,9 @@
 import * as Transport from 'winston-transport';
-import { Rng } from 'util/rng';
+import { Game } from 'engine/game';
 
 export interface InitData {
-  /** Random engine used by the game */
-  rng: Rng;
+  /** Game system functions */
+  game: Game;
   /** Debug mode enabled or not */
   debug?: boolean;
 }

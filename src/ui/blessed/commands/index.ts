@@ -1,12 +1,20 @@
 import { tokenizer } from 'util/tokenizer';
+import { Game } from 'engine/game';
 import { Log } from '../widgets/log';
 
-export type CommandCall = (log: Log, ...args: string[]) => void;
+interface CommandData {
+  log: Log;
+  game: Game;
+}
+export type CommandCall = (
+  data: CommandData,
+  ...args: string[]
+) => void | Promise<void>;
 
 const commandMap: {
   [command: string]: CommandCall;
 } = {
-  help: log => {
+  help: ({ log }) => {
     log.addMessage('Console keys:');
     log.addMessage(' [ {yellow-fg}`{/yellow-fg} ] Toggle the log/terminal');
     log.addMessage(' [ {yellow-fg}TAB{/yellow-fg} ] Auto-complete');
@@ -17,9 +25,10 @@ const commandMap: {
     log.addMessage(' [ {yellow-fg}⬆︎{/yellow-fg} ] Scroll log messages up');
     log.addMessage(' [ {yellow-fg}⬇︎{/yellow-fg} ] Scroll log messages down');
   },
-  echo: (log, ...args) => {
+  echo: ({ log }, ...args) => {
     log.addMessage(`{grey-fg}${args.join(' ')}{/grey-fg}`);
   },
+  clear: ({ log }) => log.clear(),
   exit: () => process.exit(0),
   clear: log => log.clear(),
 };
@@ -28,7 +37,7 @@ export const availableCommands = Object.keys(commandMap).map(
   command => `/${command}`
 );
 
-export function processCommand(text: string, log: Log): void {
+export function processCommand(text: string, log: Log, game: Game): void {
   if (!/^\s*\/([a-z_0-9]+)\s*(.*)/i.test(text)) {
     log.addMessage(`Syntax error. Try with {yellow-fg}/help{/yellow-fg}`);
     return;
@@ -38,7 +47,7 @@ export function processCommand(text: string, log: Log): void {
   const args = tokenizer(RegExp.$2);
   const fn = commandMap[command];
   if (fn) {
-    fn(log, ...args);
+    fn({ log, game }, ...args);
   } else {
     log.addMessage(`Unknown command {yellow-fg}/${command}{/yellow-fg}`);
   }

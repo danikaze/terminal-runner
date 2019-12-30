@@ -95,9 +95,9 @@ export class Game {
    * Initialize all the required resources
    */
   public async init(): Promise<void> {
-    this.ui = new this.options.Ui({
-      debug: this.options.debug,
-      rng: this.rng,
+    this.ui = new this.uiConstructor({
+      game: this,
+      debug: this.isDebugModeEnabled,
     });
     const loggerTransports = this.ui.gameLog
       ? [this.ui.gameLog.getTransport()]
