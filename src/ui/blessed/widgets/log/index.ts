@@ -40,6 +40,16 @@ export class Log {
     shift: false,
     ctrl: false,
   };
+  protected static readonly keyDefScrollPageUp: KeyDeclaration = {
+    key: 'pageup',
+    shift: false,
+    ctrl: false,
+  };
+  protected static readonly keyDefScrollPageDown: KeyDeclaration = {
+    key: 'pagedown',
+    shift: false,
+    ctrl: false,
+  };
   protected static readonly keyDefTerminalExpand: KeyDeclaration = {
     key: 'down',
     shift: true,
@@ -204,10 +214,7 @@ export class Log {
    * Method that re-renders the widget (log messages) based in the content
    */
   protected updateContent(): void {
-    const lines =
-      (this.logBox.height as number) -
-      (this.inputBox ? (this.inputBox.height as number) : 0) -
-      2; // borders
+    const lines = this.getNumberOfDisplayedLines();
     const text = this.messages
       .slice(Math.max(0, this.lastLine - lines), this.lastLine)
       .join('\n');
@@ -215,6 +222,18 @@ export class Log {
     if (this.isVisible) {
       this.screen.render();
     }
+  }
+
+  /**
+   * Return the number of displayed lines in the log widget,
+   * depending on he displayed elements and the widget size
+   */
+  protected getNumberOfDisplayedLines(): number {
+    return (
+      (this.logBox.height as number) -
+      (this.inputBox ? (this.inputBox.height as number) : 0) -
+      2
+    ); // borders;
   }
 
   /**
@@ -312,6 +331,16 @@ export class Log {
 
     if (compareKey(Log.keyDefScrollDown, char, key)) {
       this.scroll(1);
+      return false;
+    }
+
+    if (compareKey(Log.keyDefScrollPageUp, char, key)) {
+      this.scroll(-this.getNumberOfDisplayedLines());
+      return false;
+    }
+
+    if (compareKey(Log.keyDefScrollPageDown, char, key)) {
+      this.scroll(this.getNumberOfDisplayedLines());
       return false;
     }
 
