@@ -1,5 +1,12 @@
-import { existsSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
+import {
+  existsSync,
+  readdirSync,
+  statSync,
+  writeFile,
+  readFile,
+  mkdirSync,
+} from 'fs';
+import { join, dirname } from 'path';
 import { GameUi, GameUiConstructor } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
 import { logger, GameLogger } from './game-logger';
@@ -9,6 +16,7 @@ import { getAppPath } from 'util/get-app-path';
 interface GameOptions {
   Ui: GameUiConstructor;
   storiesFolders?: string[];
+  savegamesFolder?: string;
   debug?: boolean;
 }
 
@@ -20,6 +28,12 @@ export class Game {
     getAppPath() || '',
     'data',
     'stories'
+  );
+  /** Default folder for the savegame files */
+  protected static readonly SAVEGAME_FOLDER = join(
+    getAppPath() || '',
+    'data',
+    'save'
   );
 
   protected readonly options: GameOptions;
@@ -40,7 +54,8 @@ export class Game {
       throw new Error(errors.join('\n'));
     }
 
-    this.options = options;
+    this.savegamesFolder = options.savegamesFolder || Game.SAVEGAME_FOLDER;
+    this.isDebugModeEnabled = !!options.debug;
     this.rng = new Rng();
   }
 
@@ -93,6 +108,80 @@ export class Game {
 
     logger.game.end();
     await this.ui.end();
+  }
+
+  /**
+   * Exit the game
+   */
+  public quit(): void {
+    process.exit(0);
+  }
+
+  /**
+   * Save the current status to the game
+   *
+   * @param file Filename (without folders, etc.). It will be stored in the save folder
+   */
+  public saveGame(file: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const filePath = join(this.savegamesFolder, file);
+
+      const json = JSON.stringify(
+        {
+          local: this.local,
+          global: this.global,
+        },
+        null,
+        this.isDebugModeEnabled ? 2 : 0
+      );
+
+      if (!existsSync(dirname(filePath))) {
+        mkdirSync(dirname(filePath));
+      }
+
+      writeFile(filePath, json, error => {
+        if (error) {
+          logger.game.errorSavingGame(file, error.message);
+          reject(error);
+        } else {
+          logger.game.gameSaved(file);
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
+   * Load the status of the game from a file
+   *
+   * @param file Filename (without folders, etc.). It will be read from the save folder
+   */
+  public async loadGame(file: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const filePath = join(this.savegamesFolder, file);
+
+      readFile(filePath, (error, data) => {
+        if (error) {
+          logger.game.errorLoadingGame(file, error.message);
+          reject(error);
+          return;
+        }
+
+        try {
+          const json = JSON.parse(data.toString());
+          this.global = json.global;
+          this.local = json.local;
+          // TODO: Reset status of the game properly
+        } catch (error) {
+          logger.game.errorLoadingGame(file, error.message);
+          reject(error);
+          return;
+        }
+
+        logger.game.gameLoaded(file);
+        resolve();
+      });
+    });
   }
 
   /**
