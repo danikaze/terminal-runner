@@ -28,9 +28,18 @@ const commandMap: {
   echo: ({ log }, ...args) => {
     log.addMessage(`{grey-fg}${args.join(' ')}{/grey-fg}`);
   },
+  exit: ({ game }) => game.quit(),
   clear: ({ log }) => log.clear(),
-  exit: () => process.exit(0),
-  clear: log => log.clear(),
+  save: async ({ game }, file) => {
+    try {
+      await game.saveGame(file);
+    } catch (e) {}
+  },
+  load: async ({ game }, file) => {
+    try {
+      await game.loadGame(file);
+    } catch (e) {}
+  },
 };
 
 export const availableCommands = Object.keys(commandMap).map(
