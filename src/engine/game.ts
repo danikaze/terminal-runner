@@ -6,7 +6,7 @@ import {
   readFile,
   mkdirSync,
 } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, relative } from 'path';
 import { GameUi, GameUiConstructor } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
 import { logger, GameLogger } from './game-logger';
@@ -39,19 +39,25 @@ export class Game {
   /** RNG system to use across subsystems */
   public readonly rng: Rng;
 
+  /** Constructor to create the UI */
   protected readonly uiConstructor: GameUiConstructor;
+  /** Folder where the stories are stored */
   protected readonly storiesFolder: string[];
+  /** Folder where the savegame files are stored */
   protected readonly savegamesFolder: string;
+  /** If it's in debug mode or not */
   protected readonly isDebugModeEnabled: boolean;
 
   /** UI to use */
   protected readonly ui: GameUi;
   /** List of loaded stories */
   protected stories: Story[] = [];
+  /** Current story being run */
+  protected currentStory: Story | undefined;
   /** variables to share across stories */
   protected global: Dict = {};
   /** variables local to each story */
-  protected local: { [key: number]: {} } = {};
+  protected local: { [storyId: string]: {} } = {};
 
   constructor(options: GameOptions) {
     const errors = Game.validateOptions(options);
@@ -118,10 +124,10 @@ export class Game {
     logger.game.start();
     await this.ui.start();
 
-    let story = this.selectStory();
-    while (story) {
-      await story.run(this.getStoryRunData(story.id));
-      story = this.selectStory();
+    this.currentStory = this.selectStory();
+    while (this.currentStory) {
+      await this.currentStory.run(this.getStoryRunData(this.currentStory));
+      this.currentStory = this.selectStory();
     }
 
     logger.game.end();
@@ -146,6 +152,7 @@ export class Game {
 
       const json = JSON.stringify(
         {
+          currentStory: this.currentStory && this.currentStory.source,
           local: this.local,
           global: this.global,
         },
@@ -190,6 +197,9 @@ export class Game {
           this.global = json.global;
           this.local = json.local;
           // TODO: Reset status of the game properly
+          if (json.currentStory) {
+            this.currentStory = this.stories[json.currentStory];
+          }
         } catch (error) {
           logger.game.errorLoadingGame(file, error.message);
           reject(error);
@@ -207,6 +217,8 @@ export class Game {
    * Only files ending with `Game.STORY_EXT` will be loaded
    */
   protected async loadStories(folders: string[]): Promise<void> {
+    const appPath = getAppPath() || '';
+
     folders.forEach(folder => {
       readdirSync(folder).forEach(async file => {
         const filePath = join(folder, file);
@@ -223,11 +235,11 @@ export class Game {
         try {
           const storyData = __non_webpack_require__(filePath)
             .story as StoryData;
-          const internal = { source: `${folder}/${file}` };
+          const internal = { source: relative(appPath, join(folder, file)) };
           const story = new Story(internal, storyData);
-          this.local[story.id] = {};
+          this.local[story.source] = {};
           this.stories.push(story);
-          story.loaded(this.getStoryRunData(story.id));
+          story.loaded(this.getStoryRunData(story));
           logger.story.loaded(story);
         } catch (errors) {
           logger.story.errorLoading(errors);
@@ -241,7 +253,7 @@ export class Game {
    */
   protected selectStory(): Story | undefined {
     const selectableStories = this.stories.filter(story =>
-      story.selectCondition(this.getStoryRunData(story.id))
+      story.selectCondition(this.getStoryRunData(story))
     );
 
     if (selectableStories.length === 0) return;
@@ -254,11 +266,11 @@ export class Game {
    *
    * @param storyId id for the local data
    */
-  protected getStoryRunData(storyId: number): StoryRunData {
+  protected getStoryRunData(story: Story): StoryRunData {
     return {
       ui: this.ui,
       global: this.global,
-      local: this.local[storyId],
+      local: this.local[story.source],
       logger: logger.data,
     };
   }
