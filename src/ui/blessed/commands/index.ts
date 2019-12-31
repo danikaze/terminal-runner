@@ -44,6 +44,20 @@ const commandMap: {
       await game.loadGame(file);
     } catch (e) {}
   },
+  get: ({ game, log }, key) => {
+    try {
+      const value = game.getValue(key);
+      if (value !== undefined) {
+        log.addMessage(value);
+      } else {
+        log.addMessage(
+          `{yellow-fg}${key}{/yellow-fg} not found or not defined`
+        );
+      }
+    } catch (e) {
+      log.addMessage(`{red-fg}Error:{/red-fg} ${e}`);
+    }
+  },
 };
 
 export const availableCommands = Object.keys(commandMap).map(
@@ -59,6 +73,8 @@ export function processCommand(text: string, log: Log, game: Game): void {
   const command = RegExp.$1;
   const args = tokenizer(RegExp.$2);
   const fn = commandMap[command];
+
+  log.addMessage(`{blue-fg}${text}{/blue-fg}`);
   if (fn) {
     fn({ log, game }, ...args);
   } else {
