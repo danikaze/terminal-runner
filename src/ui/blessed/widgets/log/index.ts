@@ -198,13 +198,19 @@ export class Log {
    * Adds a text in the log area
    */
   public addMessage(text: string): void {
+    const lines = text.split('\n');
     if (this.lastLine === this.messages.length) {
-      this.lastLine++;
+      this.lastLine += lines.length;
     }
-    this.messages.push(text);
+    lines.forEach(line => {
+      this.messages.push(line);
+    });
     this.updateContent();
   }
 
+  /**
+   * Empties the log messages box
+   */
   public clear(): void {
     this.messages.splice(0, this.messages.length);
     this.updateContent();
