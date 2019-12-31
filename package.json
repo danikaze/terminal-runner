@@ -6,12 +6,14 @@
   "scripts": {
     "start": "node app/index.js --debug",
     "start-dev": "node --inspect-brk app/index.js --debug",
-    "build": "npm run build-src && npm run build-data",
+    "build": "npm run clean && npm run build-data && npm run build-src",
     "build-src": "webpack",
     "build-data": "tsc -p tsconfig-data.json && rimraf app/engine app/util",
-    "dev": "npm run dev-data & npm run dev-src",
-    "dev-src": "webpack --env=dev",
-    "dev-data": "tsc -w -p tsconfig-data.json",
+    "pack": "npm run clean && npm run build-data && npm run build-src -- --env.pack=true && npm run pack-app",
+    "pack-app": "pkg app/index.js --targets host --out-path app/bin",
+    "dev": "npm run clean && npm run dev-data & npm run dev-src",
+    "dev-src": "webpack --env.dev=true",
+    "dev-data": "tsc -w --sourceMap -p tsconfig-data.json",
     "clean": "rimraf app",
     "test": "npm run lint && npm run mocha",
     "lint": "tslint -p tsconfig.json -c tslint.yaml",
@@ -38,6 +40,9 @@
     "npm": "6.4.x"
   },
   "homepage": "https://github.com/danikaze/terminal-runner",
+  "pkg": {
+    "scripts": "app/data/**/*.js"
+  },
   "devDependencies": {
     "@types/blessed": "^0.1.15",
     "@types/chai": "^4.2.7",
@@ -53,6 +58,7 @@
     "mocha": "^6.2.2",
     "node-loader": "^0.6.0",
     "nyc": "^15.0.0",
+    "pkg": "^4.4.2",
     "prettier": "^1.19.1",
     "rimraf": "^3.0.0",
     "sinon": "^8.0.1",

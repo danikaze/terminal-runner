@@ -1,34 +1,46 @@
 const { join } = require('path');
 const { DefinePlugin } = require('webpack');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const GitRevisionPlugin = require('git-revision-webpack-plugin');
 
 const gitRevisionPlugin = new GitRevisionPlugin();
 
-let constants = (() => {
+// read the constants from the constants file or return an empty object if not found
+function getConstants() {
   let res = {};
   try {
     res = require('./constants');
   } finally {
     return res;
   }
-})();
+}
 
 module.exports = env => {
-  const isProd = env !== 'dev';
+  const targetPath = join(__dirname, 'app');
+  const isProduction = !env || !env.dev;
+  const isPackage = (env && env.pack) || false;
+  const defines = {
+    ...getConstants(),
+    NODE_ENV: isProduction ? 'production' : 'development',
+    IS_PRODUCTION: isProduction,
+    IS_PACKAGE: isPackage,
+    GIT_VERSION: gitRevisionPlugin.version(),
+    GIT_COMMITHASH: gitRevisionPlugin.commithash(),
+    GIT_BRANCH: gitRevisionPlugin.branch(),
+  };
+  console.log(`Webpack building with ${JSON.stringify(defines, null, 2)}`);
 
   return {
-    mode: isProd ? 'production' : 'development',
-    watch: !isProd,
-    devtool: isProd ? undefined : 'source-map',
+    mode: isProduction ? 'production' : 'development',
+    watch: !isProduction,
+    devtool: isProduction ? undefined : 'source-map',
 
     entry: {
       index: join(__dirname, 'src', 'index.ts'),
     },
     output: {
-      path: join(__dirname, 'app'),
+      path: targetPath,
     },
 
     stats: {
@@ -55,8 +67,8 @@ module.exports = env => {
     },
 
     optimization: {
-      minimize: isProd,
-      namedModules: !isProd,
+      minimize: isProduction,
+      namedModules: !isProduction,
     },
 
     module: {
@@ -82,7 +94,9 @@ module.exports = env => {
           loader: 'string-replace-loader',
           options: {
             search: "__dirname \\+ '/../usr/",
-            replace: "__dirname + '/usr/",
+            replace: isPackage
+              ? "require('path').dirname(process.execPath) + '/usr/"
+              : "__dirname + '/usr/",
             flags: 'g',
           },
         },
@@ -90,25 +104,36 @@ module.exports = env => {
     },
 
     plugins: [
-      new GitRevisionPlugin(),
-      new DefinePlugin({
-        ...(() => {
-          const c = { ...constants };
+      new DefinePlugin(
+        (() => {
+          const c = { ...defines };
           Object.keys(c).forEach(k => {
             c[k] = JSON.stringify(c[k]);
           });
           return c;
-        })(),
-        NODE_ENV: JSON.stringify(isProd ? 'production' : 'development'),
-        IS_PRODUCTION: isProd,
-        GIT_VERSION: JSON.stringify(gitRevisionPlugin.version()),
-        GIT_COMMITHASH: JSON.stringify(gitRevisionPlugin.commithash()),
-        GIT_BRANCH: JSON.stringify(gitRevisionPlugin.branch()),
-      }),
+        })()
+      ),
       // Copy the files required by blessed in runtime into the target `app` folder:
       new CopyPlugin([
         { from: join(__dirname, 'node_modules', 'blessed', 'usr'), to: 'usr' },
       ]),
-    ].concat(isProd ? [new CleanWebpackPlugin()] : []),
+    ]
+      // when packing, we need to copy resources to the binary folder too
+      .concat(
+        isPackage
+          ? [
+              new CopyPlugin([
+                {
+                  from: join(__dirname, 'node_modules', 'blessed', 'usr'),
+                  to: 'bin/usr',
+                },
+                {
+                  from: join(targetPath, 'data'),
+                  to: 'bin/data',
+                },
+              ]),
+            ]
+          : []
+      ),
   };
 };
