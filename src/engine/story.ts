@@ -7,7 +7,7 @@ type SelectConditionCallback<L, G> = (data: StoryRunData<L, G>) => boolean;
 type RunCallback<L, G> = (data: StoryRunData<L, G>) => Promise<void>;
 
 interface InternalStoryData {
-  source: string | undefined;
+  source: string;
 }
 
 export interface StoryRunData<L extends {} = {}, G extends {} = {}> {
@@ -35,17 +35,13 @@ export interface StoryData<L extends {} = {}, G extends {} = {}> {
  * instance attributes, since the data will be stored and the attributes will not.
  */
 export class Story<L extends {} = {}, G extends {} = {}> {
-  protected static idCounter = 0;
-
-  public id: number;
-  public source: string | undefined;
+  public source: string;
   public name: string;
   public selectCondition: SelectConditionCallback<L, G>;
   protected onLoad?: OnLoadCallback<L, G>;
   protected runStory: RunCallback<L, G>;
 
   constructor(internal: InternalStoryData, data: StoryData<L, G>) {
-    this.id = ++Story.idCounter;
     this.source = internal.source;
     this.name = data.name;
     this.selectCondition = data.selectCondition;

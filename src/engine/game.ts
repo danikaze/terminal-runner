@@ -1,5 +1,12 @@
-import { existsSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
+import {
+  existsSync,
+  readdirSync,
+  statSync,
+  writeFile,
+  readFile,
+  mkdirSync,
+} from 'fs';
+import { join, dirname, relative } from 'path';
 import { GameUi, GameUiConstructor } from './model/ui';
 import { Story, StoryData, StoryRunData } from './story';
 import { logger, GameLogger } from './game-logger';
@@ -9,6 +16,7 @@ import { getAppPath } from 'util/get-app-path';
 interface GameOptions {
   Ui: GameUiConstructor;
   storiesFolders?: string[];
+  savegamesFolder?: string;
   debug?: boolean;
 }
 
@@ -17,22 +25,39 @@ export class Game {
   protected static readonly STORY_EXT = 'story.js';
   /** Default folder for the stories */
   protected static readonly STORY_FOLDER = join(
-    getAppPath() || '',
+    getAppPath(),
     'data',
     'stories'
   );
+  /** Default folder for the savegame files */
+  protected static readonly SAVEGAME_FOLDER = join(
+    getAppPath(),
+    'data',
+    'save'
+  );
 
-  protected readonly options: GameOptions;
   /** RNG system to use across subsystems */
-  protected readonly rng: Rng;
+  public readonly rng: Rng;
+
+  /** Constructor to create the UI */
+  protected readonly uiConstructor: GameUiConstructor;
+  /** Folder where the stories are stored */
+  protected readonly storiesFolder: string[];
+  /** Folder where the savegame files are stored */
+  protected readonly savegamesFolder: string;
+  /** If it's in debug mode or not */
+  protected readonly isDebugModeEnabled: boolean;
+
   /** UI to use */
-  protected ui!: GameUi;
+  protected readonly ui: GameUi;
   /** List of loaded stories */
   protected stories: Story[] = [];
+  /** Current story being run */
+  protected currentStory: Story | undefined;
   /** variables to share across stories */
   protected global: Dict = {};
   /** variables local to each story */
-  protected local: { [key: number]: {} } = {};
+  protected local: { [storyId: string]: {} } = {};
 
   constructor(options: GameOptions) {
     const errors = Game.validateOptions(options);
@@ -40,8 +65,21 @@ export class Game {
       throw new Error(errors.join('\n'));
     }
 
-    this.options = options;
+    // attributes
+    this.storiesFolder =
+      !options.storiesFolders || options.storiesFolders.length === 0
+        ? [Game.STORY_FOLDER]
+        : options.storiesFolders;
+    this.savegamesFolder = options.savegamesFolder || Game.SAVEGAME_FOLDER;
+    this.uiConstructor = options.Ui;
+    this.isDebugModeEnabled = !!options.debug;
+
+    // instances
     this.rng = new Rng();
+    this.ui = new this.uiConstructor({
+      game: this,
+      debug: this.isDebugModeEnabled,
+    });
   }
 
   /**
@@ -49,15 +87,19 @@ export class Game {
    */
   public static validateOptions(options: GameOptions): string[] | null {
     const errors: string[] = [];
-    if (!options.storiesFolders || options.storiesFolders.length === 0) {
-      options.storiesFolders = [Game.STORY_FOLDER];
+    const { storiesFolders, savegamesFolder } = options;
+
+    if (storiesFolders) {
+      storiesFolders.forEach(folder => {
+        if (!existsSync(folder)) {
+          errors.push(`Stories folder (${folder}) doesn't exist`);
+        }
+      });
     }
 
-    options.storiesFolders.forEach(folder => {
-      if (!existsSync(folder)) {
-        errors.push(`Stories folder (${folder}) doesn't exist`);
-      }
-    });
+    if (savegamesFolder && !existsSync(savegamesFolder)) {
+      errors.push(`Savegames folder (${savegamesFolder}) doesn't exist`);
+    }
 
     return errors.length === 0 ? null : errors;
   }
@@ -66,16 +108,13 @@ export class Game {
    * Initialize all the required resources
    */
   public async init(): Promise<void> {
-    this.ui = new this.options.Ui({
-      debug: this.options.debug,
-      rng: this.rng,
-    });
     const loggerTransports = this.ui.gameLog
       ? [this.ui.gameLog.getTransport()]
       : undefined;
 
     GameLogger.init(loggerTransports);
-    await this.loadStories(this.options.storiesFolders!);
+
+    await this.loadStories(this.storiesFolder);
   }
 
   /**
@@ -85,10 +124,10 @@ export class Game {
     logger.game.start();
     await this.ui.start();
 
-    let story = this.selectStory();
-    while (story) {
-      await story.run(this.getStoryRunData(story.id));
-      story = this.selectStory();
+    this.currentStory = this.selectStory();
+    while (this.currentStory) {
+      await this.currentStory.run(this.getStoryRunData(this.currentStory));
+      this.currentStory = this.selectStory();
     }
 
     logger.game.end();
@@ -96,10 +135,90 @@ export class Game {
   }
 
   /**
+   * Exit the game
+   */
+  public quit(): void {
+    process.exit(0);
+  }
+
+  /**
+   * Save the current status to the game
+   *
+   * @param file Filename (without folders, etc.). It will be stored in the save folder
+   */
+  public saveGame(file: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const filePath = join(this.savegamesFolder, file);
+
+      const json = JSON.stringify(
+        {
+          currentStory: this.currentStory && this.currentStory.source,
+          local: this.local,
+          global: this.global,
+        },
+        null,
+        this.isDebugModeEnabled ? 2 : 0
+      );
+
+      if (!existsSync(dirname(filePath))) {
+        mkdirSync(dirname(filePath));
+      }
+
+      writeFile(filePath, json, error => {
+        if (error) {
+          logger.game.errorSavingGame(file, error.message);
+          reject(error);
+        } else {
+          logger.game.gameSaved(file);
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
+   * Load the status of the game from a file
+   *
+   * @param file Filename (without folders, etc.). It will be read from the save folder
+   */
+  public async loadGame(file: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const filePath = join(this.savegamesFolder, file);
+
+      readFile(filePath, (error, data) => {
+        if (error) {
+          logger.game.errorLoadingGame(file, error.message);
+          reject(error);
+          return;
+        }
+
+        try {
+          const json = JSON.parse(data.toString());
+          this.global = json.global;
+          this.local = json.local;
+          // TODO: Reset status of the game properly
+          if (json.currentStory) {
+            this.currentStory = this.stories[json.currentStory];
+          }
+        } catch (error) {
+          logger.game.errorLoadingGame(file, error.message);
+          reject(error);
+          return;
+        }
+
+        logger.game.gameLoaded(file);
+        resolve();
+      });
+    });
+  }
+
+  /**
    * Load the stories from the specified folders recursively
    * Only files ending with `Game.STORY_EXT` will be loaded
    */
   protected async loadStories(folders: string[]): Promise<void> {
+    const appPath = getAppPath();
+
     folders.forEach(folder => {
       readdirSync(folder).forEach(async file => {
         const filePath = join(folder, file);
@@ -116,11 +235,11 @@ export class Game {
         try {
           const storyData = __non_webpack_require__(filePath)
             .story as StoryData;
-          const internal = { source: `${folder}/${file}` };
+          const internal = { source: relative(appPath, join(folder, file)) };
           const story = new Story(internal, storyData);
-          this.local[story.id] = {};
+          this.local[story.source] = {};
           this.stories.push(story);
-          story.loaded(this.getStoryRunData(story.id));
+          story.loaded(this.getStoryRunData(story));
           logger.story.loaded(story);
         } catch (errors) {
           logger.story.errorLoading(errors);
@@ -134,7 +253,7 @@ export class Game {
    */
   protected selectStory(): Story | undefined {
     const selectableStories = this.stories.filter(story =>
-      story.selectCondition(this.getStoryRunData(story.id))
+      story.selectCondition(this.getStoryRunData(story))
     );
 
     if (selectableStories.length === 0) return;
@@ -147,11 +266,11 @@ export class Game {
    *
    * @param storyId id for the local data
    */
-  protected getStoryRunData(storyId: number): StoryRunData {
+  protected getStoryRunData(story: Story): StoryRunData {
     return {
       ui: this.ui,
       global: this.global,
-      local: this.local[storyId],
+      local: this.local[story.source],
       logger: logger.data,
     };
   }

@@ -2,15 +2,19 @@ const { join } = require('path');
 const { DefinePlugin } = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const GitRevisionPlugin = require('git-revision-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const GitRevisionPlugin = require('git-revision-webpack-plugin');
 
-let constants;
-try {
-  constants = require('./constants');
-} catch (e) {
-  constants = {};
-}
+const gitRevisionPlugin = new GitRevisionPlugin();
+
+let constants = (() => {
+  let res = {};
+  try {
+    res = require('./constants');
+  } finally {
+    return res;
+  }
+})();
 
 module.exports = env => {
   const isProd = env !== 'dev';
@@ -97,6 +101,9 @@ module.exports = env => {
         })(),
         NODE_ENV: JSON.stringify(isProd ? 'production' : 'development'),
         IS_PRODUCTION: isProd,
+        GIT_VERSION: JSON.stringify(gitRevisionPlugin.version()),
+        GIT_COMMITHASH: JSON.stringify(gitRevisionPlugin.commithash()),
+        GIT_BRANCH: JSON.stringify(gitRevisionPlugin.branch()),
       }),
       // Copy the files required by blessed in runtime into the target `app` folder:
       new CopyPlugin([

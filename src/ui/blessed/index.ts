@@ -2,8 +2,8 @@ import * as Transport from 'winston-transport';
 import { WinstonTransport, LogData, SYMBOL_MESSAGE } from './winston-transport';
 import * as blessed from 'blessed';
 import { GameUi, InitData, SelectData, SelectOptions } from 'engine/model/ui';
+import { Game } from 'engine/game';
 import { logger } from 'engine/game-logger';
-import { Rng } from 'util/rng';
 import { Log } from './widgets/log';
 import { autocompleteCommand, processCommand } from './commands';
 import { Select } from './widgets/select';
@@ -29,19 +29,19 @@ export class TerminalUi implements GameUi {
     },
   };
 
-  private readonly rng: Rng;
+  protected readonly game: Game;
   private readonly isDebugModeEnabled: boolean;
   private readonly screen: blessed.Widgets.Screen;
 
   private readonly log: Log;
 
   constructor(data: InitData) {
-    this.rng = data.rng;
+    this.game = data.game;
     this.isDebugModeEnabled = !!data.debug;
 
     this.screen = blessed.screen({ smartCSR: true });
 
-    this.screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+    this.screen.key(['escape', 'q', 'C-c'], this.game.quit);
 
     this.log = new Log({
       screen: this.screen,
@@ -51,7 +51,7 @@ export class TerminalUi implements GameUi {
             if (!trimmedCommand) {
               return;
             }
-            processCommand(trimmedCommand, this.log!);
+            processCommand(trimmedCommand, this.log!, this.game);
           }
         : undefined,
       onAutocomplete: text => autocompleteCommand(text, this.log!),
@@ -81,7 +81,7 @@ export class TerminalUi implements GameUi {
   ): Promise<T> {
     return new Promise<T>(resolve => {
       const items =
-        options && options.randomSort ? this.rng.shuffle(data) : data;
+        options && options.randomSort ? this.game.rng.shuffle(data) : data;
 
       new Select({
         text: options && options.text,
