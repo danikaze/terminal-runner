@@ -217,6 +217,34 @@ export class Log {
   }
 
   /**
+   * Scroll up (<0) or down (>0) the log messages area by the specified number of lines
+   */
+  public scroll(delta: number, force?: boolean): void {
+    const oldLastLine = this.lastLine;
+    const maxLine = this.messages.length;
+    const minLine = Math.min(
+      (this.logBox.height as number) -
+        (this.inputBox ? (this.inputBox.height as number) : 0) -
+        2,
+      maxLine
+    );
+
+    this.lastLine = clamp(oldLastLine + delta, minLine, maxLine);
+
+    if (oldLastLine === this.lastLine && !force) {
+      return;
+    }
+    this.updateContent();
+  }
+
+  /**
+   * Scroll to a specific line, being `0` the first one, `Inifine` the last one
+   */
+  public scrollTo(line: number): void {
+    this.scroll(line - this.lastLine);
+  }
+
+  /**
    * Method that re-renders the widget (log messages) based in the content
    */
   protected updateContent(): void {
@@ -258,27 +286,6 @@ export class Log {
       return;
     }
     this.scroll(0, true);
-  }
-
-  /**
-   * Scroll up (<0) or down (>0) the log messages area by the specified number of lines
-   */
-  protected scroll(delta: number, force?: boolean): void {
-    const oldLastLine = this.lastLine;
-    const maxLine = this.messages.length;
-    const minLine = Math.min(
-      (this.logBox.height as number) -
-        (this.inputBox ? (this.inputBox.height as number) : 0) -
-        2,
-      maxLine
-    );
-
-    this.lastLine = clamp(oldLastLine + delta, minLine, maxLine);
-
-    if (oldLastLine === this.lastLine && !force) {
-      return;
-    }
-    this.updateContent();
   }
 
   /**
