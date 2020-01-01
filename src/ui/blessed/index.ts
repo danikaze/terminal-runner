@@ -54,7 +54,7 @@ export class TerminalUi implements GameUi {
             processCommand(trimmedCommand, this.log!, this.game);
           }
         : undefined,
-      onAutocomplete: text => autocompleteCommand(text, this.log!),
+      onAutocomplete: text => autocompleteCommand(text, this.log!, this.game),
     });
     if (this.isDebugModeEnabled) {
       this.log.show(false);

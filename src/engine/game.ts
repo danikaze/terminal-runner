@@ -213,6 +213,61 @@ export class Game {
   }
 
   /**
+   * Get a list of the existing files in the savegames folder
+   */
+  public getSaveGameList(): string[] {
+    const list: string[] = [];
+
+    try {
+      readdirSync(Game.SAVEGAME_FOLDER).forEach(file => {
+        list.push(file);
+      });
+    } catch (e) {
+      return list;
+    }
+
+    return list;
+  }
+
+  /**
+   * Read a value from the system data
+   *
+   * Accepted keys are:
+   * - currentStory
+   * - global.*
+   * - local.*
+   */
+  public getValue(key: string): string | undefined {
+    if (/^currentStory$/i.test(key)) {
+      return (this.currentStory && this.currentStory.name) || '';
+    }
+
+    let value: unknown;
+    if (/^global.(.+)$/i.test(key)) {
+      value = this.global[RegExp.$1];
+    } else if (/^local.(.+)$/i.test(key)) {
+      const local = this.currentStory && this.local[this.currentStory.source];
+      value = local && (local as { [key: string]: unknown })[RegExp.$1];
+    } else {
+      throw new SyntaxError(`Unknown key: ${key}`);
+    }
+
+    return value === undefined ? undefined : JSON.stringify(value, null, 2);
+  }
+
+  /**
+   * Get a list of possible values to read with `getValue` based on the given key
+   */
+  public getValueList(key: 'local' | 'global'): string[] {
+    if (/^global$/i.test(key)) {
+      return Object.keys(this.global);
+    }
+
+    const local = this.currentStory && this.local[this.currentStory.source];
+    return (local && Object.keys(local)) || [];
+  }
+
+  /**
    * Load the stories from the specified folders recursively
    * Only files ending with `Game.STORY_EXT` will be loaded
    */
