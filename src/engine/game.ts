@@ -239,6 +239,18 @@ export class Game {
   }
 
   /**
+   * Get a list of possible values to read with `getValue` based on the given key
+   */
+  public getValueList(key: 'local' | 'global'): string[] {
+    if (/^global$/i.test(key)) {
+      return Object.keys(this.global);
+    }
+
+    const local = this.currentStory && this.local[this.currentStory.source];
+    return (local && Object.keys(local)) || [];
+  }
+
+  /**
    * Load the stories from the specified folders recursively
    * Only files ending with `Game.STORY_EXT` will be loaded
    */
