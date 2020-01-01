@@ -213,6 +213,23 @@ export class Game {
   }
 
   /**
+   * Get a list of the existing files in the savegames folder
+   */
+  public getSaveGameList(): string[] {
+    const list: string[] = [];
+
+    try {
+      readdirSync(Game.SAVEGAME_FOLDER).forEach(file => {
+        list.push(file);
+      });
+    } catch (e) {
+      return list;
+    }
+
+    return list;
+  }
+
+  /**
    * Read a value from the system data
    *
    * Accepted keys are:
