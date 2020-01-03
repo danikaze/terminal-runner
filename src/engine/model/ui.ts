@@ -60,4 +60,8 @@ export interface GameUi {
     data: NonEmptyArray<SelectData<T>>,
     options?: SelectOptions<T>
   ): Promise<T>;
+  /**
+   * Shows text, as a description, etc. with a typewriter effect
+   */
+  text(text: string): Promise<void>;
 }

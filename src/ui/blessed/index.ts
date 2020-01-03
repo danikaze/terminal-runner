@@ -7,6 +7,7 @@ import { logger } from 'engine/game-logger';
 import { Log } from './widgets/log';
 import { autocompleteCommand, processCommand } from './commands';
 import { Select } from './widgets/select';
+import { TypewriterText } from './widgets/typewriter-text';
 
 export class TerminalUi implements GameUi {
   public gameLog = {
@@ -93,6 +94,16 @@ export class TerminalUi implements GameUi {
           logger.ui.userSelect(data);
           resolve(data);
         },
+      });
+    });
+  }
+
+  public text(text: string): Promise<void> {
+    return new Promise<void>(resolve => {
+      new TypewriterText({
+        text,
+        screen: this.screen,
+        onDone: resolve,
       });
     });
   }
