@@ -1,7 +1,7 @@
 import * as blessed from 'blessed';
 import { clamp } from 'util/clamp';
 import { KeyDeclaration, compareKey } from 'ui/blessed/util/keys';
-import { WidgetOptions } from '..';
+import { Widget, WidgetOptions, ResizeData } from '..';
 
 export interface LogOptions extends WidgetOptions {
   /**
@@ -17,7 +17,7 @@ export interface LogOptions extends WidgetOptions {
  * Log acts as a terminal window like the ones in the original Quake.
  * It presents the log messages and also a command input line if enabled.
  */
-export class Log {
+export class Log implements Widget {
   /** Minimum size of the Log box (2 lines are for the borders) */
   protected static readonly MIN_SIZE = 5;
   /** When resizing, number of lines to left uncover in the bottom */
@@ -98,11 +98,8 @@ export class Log {
       border: { type: 'line' },
       label: 'Game Log',
       clickable: true,
-      left: options.x,
-      top: options.y,
-      width: options.width,
-      height: options.height,
     });
+    this.onResize(options, true);
 
     this.logBox.on('keypress', this.processKeyEvents.bind(this));
 
@@ -148,6 +145,25 @@ export class Log {
     }
 
     this.screen.key([Log.TOGGLE_CHAR], () => this.toggle());
+  }
+
+  /**
+   * Method called when the widget needs to be resized
+   */
+  public onResize(
+    { x, y, width, height }: ResizeData,
+    delayedRender?: boolean
+  ): void {
+    const { logBox } = this;
+
+    logBox.left = x;
+    logBox.top = y;
+    logBox.width = width;
+    logBox.height = height;
+
+    if (!delayedRender) {
+      this.screen.render();
+    }
   }
 
   /**

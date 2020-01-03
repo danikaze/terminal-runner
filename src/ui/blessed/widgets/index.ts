@@ -7,9 +7,12 @@ import * as blessed from 'blessed';
  * This way, this widgets will receive the size and position
  * from the parent element/ui/layout
  */
-export interface WidgetOptions {
+export interface WidgetOptions extends ResizeData {
   /** Blessed screen where to render the widget */
   screen: blessed.Widgets.Screen;
+}
+
+export interface ResizeData {
   /** Absolute horizontal position of the screen */
   x: number;
   /** Absolute vertical position of the screen */
@@ -18,4 +21,14 @@ export interface WidgetOptions {
   width: number;
   /** Height of the widget */
   height: number;
+}
+
+export interface Widget {
+  /**
+   * Method called when the widget needs to be resized
+   *
+   * @param data Needed data for the widget to reposition itself
+   * @param delayedRender if `true`, the widget can avoid the re-render process
+   */
+  onResize(data: ResizeData, delayedRender?: boolean): void;
 }

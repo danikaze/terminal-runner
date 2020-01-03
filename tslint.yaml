@@ -362,7 +362,9 @@ rules:
   radix: true
 
   # https://palantir.github.io/tslint/rules/no-this-assignment/
-  no-this-assignment: true
+  no-this-assignment:
+    - true
+    - allow-destructuring: true
 
   # https://palantir.github.io/tslint/rules/jsdoc-format/
   jsdoc-format: true

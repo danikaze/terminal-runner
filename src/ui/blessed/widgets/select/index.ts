@@ -1,5 +1,5 @@
 import * as blessed from 'blessed';
-import { WidgetOptions } from '..';
+import { Widget, WidgetOptions, ResizeData } from '..';
 import { TimeBar } from '../time-bar';
 
 export interface SelectData<T> {
@@ -27,7 +27,7 @@ export interface SelectOptions<T> extends WidgetOptions {
 /**
  * Select shows a list of options allowing to navigate and choose between them
  */
-export class Select<T> {
+export class Select<T> implements Widget {
   protected readonly screen: blessed.Widgets.Screen;
   protected readonly items: SelectData<T>[];
   protected readonly onSelect: (data: T) => void;
@@ -47,12 +47,7 @@ export class Select<T> {
     this.items = options.items;
     this.onSelect = options.onSelect;
 
-    this.container = blessed.box({
-      left: options.x,
-      top: options.y,
-      width: options.width,
-      height: options.height,
-    });
+    this.container = blessed.box();
     this.screen.append(this.container);
 
     // time-bar if any
@@ -79,8 +74,6 @@ export class Select<T> {
       items: this.items.map(item => item.text),
       bottom: bottomPosition,
       padding: { left: 1 },
-      height: this.items.length,
-      width: '100%',
       style: {
         selected: {
           fg: 'green',
@@ -106,12 +99,12 @@ export class Select<T> {
       this.textBox = blessed.text({
         tags: true,
         content: options.text,
-        bottom: bottomPosition,
         valign: 'bottom',
       });
       this.container.append(this.textBox);
     }
 
+    this.onResize(options, true);
     this.listBox.focus();
     this.screen.render();
 
@@ -119,6 +112,45 @@ export class Select<T> {
 
     // don't allow to lose the focus until something is selected
     this.listBox.on('cancel', () => this.listBox.focus());
+  }
+
+  /**
+   * Method called when the widget needs to be resized
+   */
+  public onResize(
+    { x, y, width, height }: ResizeData,
+    delayedRender?: boolean
+  ): void {
+    const { container, timeBar, listBox, textBox } = this;
+    let bottomPosition = 0;
+
+    container.left = x;
+    container.top = y;
+    container.width = width;
+    container.height = height;
+
+    if (timeBar) {
+      timeBar.onResize({
+        x,
+        width,
+        y: y + height - 1,
+        height: 1,
+      });
+      bottomPosition += 1;
+    }
+
+    listBox.bottom = bottomPosition;
+    listBox.width = width;
+    listBox.height = this.items.length;
+    bottomPosition += listBox.height;
+
+    if (textBox) {
+      textBox.bottom = bottomPosition;
+    }
+
+    if (!delayedRender) {
+      this.screen.render();
+    }
   }
 
   protected select(index: number): void {

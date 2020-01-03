@@ -1,6 +1,6 @@
 import * as blessed from 'blessed';
 import { KeyDeclaration, compareKey } from 'ui/blessed/util/keys';
-import { WidgetOptions } from '..';
+import { Widget, WidgetOptions, ResizeData } from '..';
 
 export interface TypewriterTextOptions extends WidgetOptions {
   /** Complete text to display */
@@ -9,7 +9,7 @@ export interface TypewriterTextOptions extends WidgetOptions {
   onDone: () => void;
 }
 
-export class TypewriterText {
+export class TypewriterText implements Widget {
   /** Text to show when finished */
   protected static readonly FINISHED_TEXT = '{green-fg}▼{/green-fg}';
   /** Time to wait between characters */
@@ -54,13 +54,7 @@ export class TypewriterText {
     this.text = options.text;
     this.onDone = options.onDone;
 
-    this.mainTextBox = blessed.box({
-      left: options.x,
-      top: options.y,
-      width: options.width,
-      height: options.height,
-      tags: true,
-    });
+    this.mainTextBox = blessed.box({ tags: true });
 
     this.mainTextBox.focus();
     this.mainTextBox.on('keypress', (char, key) => {
@@ -76,10 +70,29 @@ export class TypewriterText {
       }
     });
     this.screen.append(this.mainTextBox);
-    this.screen.render();
+    this.onResize(options, true);
 
     this.update = this.update.bind(this);
     this.update();
+  }
+
+  /**
+   * Method called when the widget needs to be resized
+   */
+  public onResize(
+    { x, y, width, height }: ResizeData,
+    delayedRender?: boolean
+  ): void {
+    const { mainTextBox } = this;
+
+    mainTextBox.left = x;
+    mainTextBox.top = y;
+    mainTextBox.width = width;
+    mainTextBox.height = height;
+
+    if (!delayedRender) {
+      this.screen.render();
+    }
   }
 
   /**

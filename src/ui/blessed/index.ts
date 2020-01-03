@@ -109,12 +109,12 @@ export class TerminalUi implements GameUi {
   public text(text: string): Promise<void> {
     return new Promise<void>(resolve => {
       new TypewriterText({
+        text,
+        screen: this.screen,
         x: 0,
         y: 12,
         width: this.screen.width as number,
         height: 10,
-        text,
-        screen: this.screen,
         onDone: resolve,
       });
     });
