@@ -8,6 +8,8 @@ import { Log } from './widgets/log';
 import { autocompleteCommand, processCommand } from './commands';
 import { Select } from './widgets/select';
 import { TypewriterText } from './widgets/typewriter-text';
+import { Layout } from './layout';
+import { N_COLS, N_ROWS } from './layout/rules';
 
 export class TerminalUi implements GameUi {
   public gameLog = {
@@ -31,6 +33,7 @@ export class TerminalUi implements GameUi {
   };
 
   protected readonly game: Game;
+  protected readonly layout: Layout;
   private readonly isDebugModeEnabled: boolean;
   private readonly screen: blessed.Widgets.Screen;
 
@@ -41,6 +44,11 @@ export class TerminalUi implements GameUi {
     this.isDebugModeEnabled = !!data.debug;
 
     this.screen = blessed.screen({ smartCSR: true });
+    this.layout = new Layout({
+      screen: this.screen,
+      cols: N_COLS,
+      rows: N_ROWS,
+    });
 
     this.screen.key(['escape', 'q', 'C-c'], this.game.quit);
 
@@ -48,7 +56,7 @@ export class TerminalUi implements GameUi {
       x: 0,
       y: 0,
       width: this.screen.width as number,
-      height: 10,
+      height: 3,
       screen: this.screen,
       onInput: this.isDebugModeEnabled
         ? command => {
@@ -61,6 +69,7 @@ export class TerminalUi implements GameUi {
         : undefined,
       onAutocomplete: text => autocompleteCommand(text, this.log!, this.game),
     });
+    this.layout.addWidget('console', this.log);
     if (this.isDebugModeEnabled) {
       this.log.show(false);
     }
@@ -88,7 +97,7 @@ export class TerminalUi implements GameUi {
       const items =
         options && options.randomSort ? this.game.rng.shuffle(data) : data;
 
-      new Select({
+      const widget = new Select({
         x: 0,
         y: (this.screen.height as number) - items.length,
         width: this.screen.width as number,
@@ -100,23 +109,31 @@ export class TerminalUi implements GameUi {
         timeLimit: options && options.timeLimit,
         onSelect: data => {
           logger.ui.userSelect(data);
+          this.layout.removeWidget('userSelect');
           resolve(data);
         },
       });
+
+      this.layout.addWidget('userSelect', widget);
     });
   }
 
   public text(text: string): Promise<void> {
     return new Promise<void>(resolve => {
-      new TypewriterText({
+      const widget = new TypewriterText({
         text,
         screen: this.screen,
         x: 0,
         y: 12,
         width: this.screen.width as number,
         height: 10,
-        onDone: resolve,
+        onDone: () => {
+          this.layout.removeWidget('text');
+          resolve();
+        },
       });
+
+      this.layout.addWidget('text', widget);
     });
   }
 }
