@@ -1,9 +1,8 @@
 import * as blessed from 'blessed';
 import { KeyDeclaration, compareKey } from 'ui/blessed/util/keys';
+import { WidgetOptions } from '..';
 
-export interface TypewriterTextOptions {
-  /** blessed screen where to render the widget */
-  screen: blessed.Widgets.Screen;
+export interface TypewriterTextOptions extends WidgetOptions {
   /** Complete text to display */
   text: string;
   /** Function to call when has been completely displayed */
@@ -56,9 +55,11 @@ export class TypewriterText {
     this.onDone = options.onDone;
 
     this.mainTextBox = blessed.box({
+      left: options.x,
+      top: options.y,
+      width: options.width,
+      height: options.height,
       tags: true,
-      top: 10,
-      height: 'shrink',
     });
 
     this.mainTextBox.focus();
@@ -89,7 +90,6 @@ export class TypewriterText {
     this.currentIndex++;
 
     if (this.currentIndex > this.text.length) {
-      // TODO: Fix positioning of the finished text because align is not working
       this.mainTextBox.setContent(
         this.mainTextBox.getContent() +
           `\n{right}${TypewriterText.FINISHED_TEXT}{/right}`

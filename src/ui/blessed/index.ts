@@ -45,6 +45,10 @@ export class TerminalUi implements GameUi {
     this.screen.key(['escape', 'q', 'C-c'], this.game.quit);
 
     this.log = new Log({
+      x: 0,
+      y: 0,
+      width: this.screen.width as number,
+      height: 10,
       screen: this.screen,
       onInput: this.isDebugModeEnabled
         ? command => {
@@ -85,6 +89,10 @@ export class TerminalUi implements GameUi {
         options && options.randomSort ? this.game.rng.shuffle(data) : data;
 
       new Select({
+        x: 0,
+        y: (this.screen.height as number) - items.length,
+        width: this.screen.width as number,
+        height: items.length,
         text: options && options.text,
         items: items as NonEmptyArray<SelectData<T>>,
         screen: this.screen,
@@ -101,6 +109,10 @@ export class TerminalUi implements GameUi {
   public text(text: string): Promise<void> {
     return new Promise<void>(resolve => {
       new TypewriterText({
+        x: 0,
+        y: 12,
+        width: this.screen.width as number,
+        height: 10,
         text,
         screen: this.screen,
         onDone: resolve,

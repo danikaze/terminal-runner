@@ -1,10 +1,9 @@
 import * as blessed from 'blessed';
 import { clamp } from 'util/clamp';
 import { KeyDeclaration, compareKey } from 'ui/blessed/util/keys';
+import { WidgetOptions } from '..';
 
-export interface LogOptions {
-  /** blessed screen where to render the widget */
-  screen: blessed.Widgets.Screen;
+export interface LogOptions extends WidgetOptions {
   /**
    * Function to call when a command has been input,
    * specifying this enables the command input line
@@ -98,11 +97,11 @@ export class Log {
       tags: true,
       border: { type: 'line' },
       label: 'Game Log',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: 10,
       clickable: true,
+      left: options.x,
+      top: options.y,
+      width: options.width,
+      height: options.height,
     });
 
     this.logBox.on('keypress', this.processKeyEvents.bind(this));

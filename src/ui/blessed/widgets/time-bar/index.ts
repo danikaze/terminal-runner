@@ -1,12 +1,9 @@
 import * as blessed from 'blessed';
+import { WidgetOptions } from '..';
 
-export interface TimeBarOptions {
-  /** Blessed screen where to render the widget */
-  screen: blessed.Widgets.Screen;
+export interface TimeBarOptions extends WidgetOptions {
   /** Duration of the time bar */
   time: number;
-  /** Where to render the widget */
-  position: Partial<blessed.Widgets.Position>;
   /** Function to call when the time is over */
   onCompletion?: () => void;
   /** If `true` (by default), the widget will be removed when stopped or finished */
@@ -35,12 +32,14 @@ export class TimeBar {
     this.updateInterval = options.time / TimeBar.UPDATE_INTERVAL;
 
     this.timeBar = blessed.progressbar({
-      ...options.position,
+      width: options.width,
+      height: options.height,
+      left: options.x,
+      top: options.y,
       orientation: 'horizontal',
       filled: 0,
       keys: false,
       mouse: false,
-      height: 1,
       style: {
         bg: 'blue',
         bar: { bg: 'green', align: 'center' },
