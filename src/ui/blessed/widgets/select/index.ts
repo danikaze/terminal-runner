@@ -1,4 +1,5 @@
 import * as blessed from 'blessed';
+import { Widget, WidgetOptions, ResizeData } from '..';
 import { TimeBar } from '../time-bar';
 
 export interface SelectData<T> {
@@ -10,9 +11,7 @@ export interface SelectData<T> {
   enabled?: boolean;
 }
 
-export interface SelectOptions<T> {
-  /** Blessed screen where to render the widget */
-  screen: blessed.Widgets.Screen;
+export interface SelectOptions<T> extends WidgetOptions {
   /** List of options to present */
   items: NonEmptyArray<SelectData<T>>;
   /** Function called when an option has been selected */
@@ -28,13 +27,14 @@ export interface SelectOptions<T> {
 /**
  * Select shows a list of options allowing to navigate and choose between them
  */
-export class Select<T> {
+export class Select<T> implements Widget {
   protected readonly screen: blessed.Widgets.Screen;
   protected readonly items: SelectData<T>[];
   protected readonly onSelect: (data: T) => void;
   protected currentIndex: number = 0;
 
   // blessed widgets
+  protected readonly container: blessed.Widgets.BoxElement;
   protected readonly listBox: blessed.Widgets.ListElement;
   protected readonly textBox?: blessed.Widgets.TextElement;
   protected readonly timeBar?: TimeBar;
@@ -47,13 +47,19 @@ export class Select<T> {
     this.items = options.items;
     this.onSelect = options.onSelect;
 
+    this.container = blessed.box();
+    this.screen.append(this.container);
+
     // time-bar if any
     if (options.timeLimit && options.timeLimit > 0) {
       bottomPosition += 1;
       this.timeBar = new TimeBar({
         screen: this.screen,
         time: options.timeLimit,
-        position: { bottom: 0 },
+        x: options.x,
+        y: options.y + options.height - 1,
+        width: options.width,
+        height: options.height,
         onCompletion: () => {
           this.select(this.currentIndex);
         },
@@ -68,15 +74,13 @@ export class Select<T> {
       items: this.items.map(item => item.text),
       bottom: bottomPosition,
       padding: { left: 1 },
-      height: this.items.length,
-      width: '100%',
       style: {
         selected: {
           fg: 'green',
         },
       },
     });
-    this.screen.append(this.listBox);
+    this.container.append(this.listBox);
     bottomPosition += this.listBox.height as number;
 
     this.listBox.on('select item', (_item, index) => {
@@ -95,12 +99,12 @@ export class Select<T> {
       this.textBox = blessed.text({
         tags: true,
         content: options.text,
-        bottom: bottomPosition,
         valign: 'bottom',
       });
-      this.screen.append(this.textBox);
+      this.container.append(this.textBox);
     }
 
+    this.onResize(options, true);
     this.listBox.focus();
     this.screen.render();
 
@@ -110,17 +114,56 @@ export class Select<T> {
     this.listBox.on('cancel', () => this.listBox.focus());
   }
 
-  protected select(index: number): void {
-    this.onSelect(this.items[index].data);
-    this.screen.remove(this.listBox);
+  /**
+   * Method called when the widget needs to be resized
+   */
+  public onResize(
+    { x, y, width, height }: ResizeData,
+    delayedRender?: boolean
+  ): void {
+    const { container, timeBar, listBox, textBox } = this;
+    let bottomPosition = 0;
 
-    if (this.textBox) {
-      this.screen.remove(this.textBox);
+    container.left = x;
+    container.top = y;
+    container.width = width;
+    container.height = height;
+
+    if (timeBar) {
+      timeBar.onResize({
+        x,
+        width,
+        y: y + height - 1,
+        height: 1,
+      });
+      bottomPosition += 1;
     }
+
+    listBox.bottom = bottomPosition;
+    listBox.width = width;
+    listBox.height = this.items.length;
+    bottomPosition += listBox.height;
+
+    if (textBox) {
+      textBox.bottom = bottomPosition;
+    }
+
+    if (!delayedRender) {
+      this.screen.render();
+    }
+  }
+
+  protected select(index: number): void {
     if (this.timeBar) {
       this.timeBar.stop();
     }
+    if (this.textBox) {
+      this.container.remove(this.textBox);
+    }
 
+    this.screen.remove(this.container);
     this.screen.render();
+
+    this.onSelect(this.items[index].data);
   }
 }

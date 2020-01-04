@@ -1,12 +1,9 @@
 import * as blessed from 'blessed';
+import { Widget, WidgetOptions, ResizeData } from '..';
 
-export interface TimeBarOptions {
-  /** Blessed screen where to render the widget */
-  screen: blessed.Widgets.Screen;
+export interface TimeBarOptions extends WidgetOptions {
   /** Duration of the time bar */
   time: number;
-  /** Where to render the widget */
-  position: Partial<blessed.Widgets.Position>;
   /** Function to call when the time is over */
   onCompletion?: () => void;
   /** If `true` (by default), the widget will be removed when stopped or finished */
@@ -16,7 +13,7 @@ export interface TimeBarOptions {
 /**
  * Shows a progress bar that gets completed in the specified time
  */
-export class TimeBar {
+export class TimeBar implements Widget {
   protected static readonly UPDATE_INTERVAL = 100;
 
   protected readonly screen: blessed.Widgets.Screen;
@@ -35,17 +32,16 @@ export class TimeBar {
     this.updateInterval = options.time / TimeBar.UPDATE_INTERVAL;
 
     this.timeBar = blessed.progressbar({
-      ...options.position,
       orientation: 'horizontal',
       filled: 0,
       keys: false,
       mouse: false,
-      height: 1,
       style: {
         bg: 'blue',
         bar: { bg: 'green', align: 'center' },
       },
     });
+    this.onResize(options, true);
     this.screen.append(this.timeBar);
     this.timeBar.setContent(this.getContent());
     this.screen.render();
@@ -64,6 +60,25 @@ export class TimeBar {
       this.timeBar.setContent(this.getContent());
       this.screen.render();
     }, this.updateInterval);
+  }
+
+  /**
+   * Method called when the widget needs to be resized
+   */
+  public onResize(
+    { x, y, width, height }: ResizeData,
+    delayedRender?: boolean
+  ): void {
+    const { timeBar } = this;
+
+    timeBar.left = x;
+    timeBar.top = y;
+    timeBar.width = width;
+    timeBar.height = height;
+
+    if (!delayedRender) {
+      this.screen.render();
+    }
   }
 
   /**
