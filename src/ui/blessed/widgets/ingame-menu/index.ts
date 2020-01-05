@@ -4,6 +4,7 @@ import { alignCenter } from 'ui/blessed/util/format';
 import { KeyDeclaration, compareKey } from 'ui/blessed/util/keys';
 import { Widget, WidgetOptions, ResizeData } from '..';
 import { clamp } from 'util/clamp';
+import { Modal } from '../modal';
 
 export interface IngameMenuOptions extends WidgetOptions {
   /** Game system used for the system calls */
@@ -39,6 +40,7 @@ export class IngameMenu implements Widget {
   // blessed widgets
   protected readonly buttonsBox: blessed.Widgets.BoxElement;
   protected readonly buttons: blessed.Widgets.ButtonElement[] = [];
+  protected readonly modal: Modal;
 
   // current status of the widget
   protected isVisible: boolean = false;
@@ -53,45 +55,53 @@ export class IngameMenu implements Widget {
     this.loop = options.loop !== false;
     this.resetSelection = options.resetSelection !== false;
 
+    let y = 0;
+    const optionWidth = IngameMenu.MENU_OPTIONS.reduce(
+      (max, txt) => Math.max(max, txt.length),
+      0
+    );
+
     this.buttonsBox = blessed.box({
-      border: {
-        type: 'line',
-      },
-      padding: {
-        left: 2,
-        right: 2,
-      },
-      shadow: true,
+      top: 0,
+      left: 0,
+      width: optionWidth,
+      height: IngameMenu.MENU_OPTIONS.length * 2 - 1,
     });
 
-    let y = 1;
-    const optionWidth = this.getMenuContentMinWidth();
-    IngameMenu.MENU_OPTIONS.forEach(text => {
+    IngameMenu.MENU_OPTIONS.forEach((text, i) => {
       // TODO: Remove once this features are implemented
       // Also, please come with a proper theme of colors for all terminals, because in windows it's horrible
       const disabled = ['Options', 'Save Game', 'Load Game'].includes(text);
-      this.buttons.push(
-        blessed.button({
-          keyable: true,
-          content: alignCenter(text, optionWidth),
-          top: y,
-          align: 'center',
-          width: optionWidth,
-          height: 'shrink',
-          style: {
-            fg: disabled ? 'gray' : 'white',
-            focus: {
-              fg: disabled ? 'red' : 'yellow',
-            },
+      const button = blessed.button({
+        keyable: true,
+        mouse: true,
+        content: alignCenter(text, optionWidth),
+        top: y,
+        align: 'center',
+        width: optionWidth,
+        height: 'shrink',
+        style: {
+          fg: disabled ? 'gray' : 'white',
+          focus: {
+            fg: disabled ? 'red' : 'yellow',
           },
-        })
-      );
+        },
+      });
       y += 2;
-    });
 
-    this.buttons.forEach(button => {
+      this.buttons.push(button);
       this.buttonsBox.append(button);
       button.on('press', this.buttonPressedHandler);
+      button.on('focus', () => {
+        this.currentIndex = i;
+        this.screen.render();
+      });
+    });
+
+    this.modal = new Modal({
+      ...options,
+      children: [this.buttonsBox],
+      onFocus: () => this.buttons[this.currentIndex].focus(),
     });
 
     this.onResize(options, true);
@@ -101,17 +111,7 @@ export class IngameMenu implements Widget {
    * Method called when the widget needs to be resized
    */
   public onResize(data: ResizeData, delayedRender?: boolean | undefined): void {
-    // tslint:disable: no-magic-numbers
-    this.buttonsBox.width = this.getMenuContentMinWidth() + 6; // some margin (+ 2 borders)
-    this.buttonsBox.height = IngameMenu.MENU_OPTIONS.length * 2 + 3; // 1 margin between each option (+ 2 borders)
-    this.buttonsBox.top =
-      Math.floor((data.height - this.buttonsBox.height) / 2) - 1;
-    this.buttonsBox.left =
-      Math.floor((data.width - this.buttonsBox.width) / 2) - 1;
-
-    if (!delayedRender) {
-      this.screen.render();
-    }
+    this.modal.onResize(data, delayedRender);
   }
 
   /**
@@ -126,7 +126,7 @@ export class IngameMenu implements Widget {
     }
     this.screen.saveFocus();
     this.buttons[this.currentIndex].focus();
-    this.screen.append(this.buttonsBox);
+    this.modal.show();
 
     this.screen.grabKeys = true;
     // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/41397
@@ -146,7 +146,7 @@ export class IngameMenu implements Widget {
 
     this.isVisible = false;
     this.screen.restoreFocus();
-    this.screen.remove(this.buttonsBox);
+    this.modal.hide();
 
     this.screen.grabKeys = false;
     // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/41397
@@ -168,13 +168,6 @@ export class IngameMenu implements Widget {
     } else {
       this.show();
     }
-  }
-
-  protected getMenuContentMinWidth(): number {
-    return IngameMenu.MENU_OPTIONS.reduce(
-      (max, txt) => Math.max(max, txt.length),
-      0
-    );
   }
 
   /**
@@ -243,6 +236,5 @@ export class IngameMenu implements Widget {
         IngameMenu.MENU_OPTIONS.length;
     }
     this.buttons[this.currentIndex].focus();
-    this.screen.render();
   }
 }
