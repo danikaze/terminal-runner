@@ -24,6 +24,8 @@ export class Log implements Widget {
   protected static readonly MIN_MARGIN_BOTTOM = 5;
   /** Key used for showing or hiding the Log widget */
   protected static readonly TOGGLE_CHAR = '`';
+  /** Key used for showing or hiding the Log widget without focus */
+  protected static readonly TOGGLE_CHAR_NO_FOCUS = '~';
   /** Key used for cancelling the command input */
   protected static readonly CANCEL_KEY = 'escape';
   /** Key used to trigger the autocomplete function if provided */
@@ -144,7 +146,8 @@ export class Log implements Widget {
       });
     }
 
-    this.screen.key([Log.TOGGLE_CHAR], () => this.toggle());
+    this.screen.key(Log.TOGGLE_CHAR, () => this.toggle(true));
+    this.screen.key(Log.TOGGLE_CHAR_NO_FOCUS, () => this.toggle(false));
   }
 
   /**
