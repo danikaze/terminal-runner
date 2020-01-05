@@ -1,4 +1,5 @@
 import * as blessed from 'blessed';
+import { alignCenter } from 'ui/blessed/util/format';
 import { Widget, WidgetOptions, ResizeData } from '..';
 
 export interface TimeBarOptions extends WidgetOptions {
@@ -101,9 +102,6 @@ export class TimeBar implements Widget {
    */
   protected getContent(): string {
     const text = `${Math.ceil(this.remainingTime / 1000)} s.`;
-    const padding = ' '.repeat(
-      (this.timeBar.width as number) / 2 - text.length / 2
-    );
-    return `${padding}${text}`;
+    return alignCenter(text, this.timeBar.width as number);
   }
 }
