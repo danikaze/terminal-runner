@@ -5,6 +5,7 @@ import { GameUi, InitData, SelectData, SelectOptions } from 'engine/model/ui';
 import { Game } from 'engine/game';
 import { logger } from 'engine/game-logger';
 import { Log } from './widgets/log';
+import { IngameMenu } from './widgets/ingame-menu';
 import { autocompleteCommand, processCommand } from './commands';
 import { Select } from './widgets/select';
 import { TypewriterText } from './widgets/typewriter-text';
@@ -38,6 +39,7 @@ export class TerminalUi implements GameUi {
   private readonly screen: blessed.Widgets.Screen;
 
   private readonly log: Log;
+  private readonly ingameMenu: IngameMenu;
 
   constructor(data: InitData) {
     this.game = data.game;
@@ -50,7 +52,7 @@ export class TerminalUi implements GameUi {
       rows: N_ROWS,
     });
 
-    this.screen.key(['escape', 'q', 'C-c'], this.game.quit);
+    this.screen.key(['q', 'C-c'], this.game.quit);
 
     this.log = new Log({
       x: 0,
@@ -73,6 +75,18 @@ export class TerminalUi implements GameUi {
     if (this.isDebugModeEnabled) {
       this.log.show(false);
     }
+
+    this.ingameMenu = new IngameMenu({
+      screen: this.screen,
+      game: this.game,
+      x: 0,
+      y: 0,
+      width: this.screen.width as number,
+      height: this.screen.height as number,
+    });
+    this.screen.key('escape', () => {
+      this.ingameMenu.toggle();
+    });
   }
 
   public async start(): Promise<void> {
