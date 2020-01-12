@@ -51,9 +51,13 @@ export class Game {
   /** UI to use */
   protected readonly ui: GameUi;
   /** List of loaded stories */
-  protected stories: Story[] = [];
+  protected readonly stories: Story[] = [];
+  /** Indexed loaded stories by id */
+  protected readonly storiesMap: { [key: string]: Story } = {};
   /** Current story being run */
   protected currentStory: Story | undefined;
+  /** Story to load after the current one */
+  protected readonly storyQueue: Story[] = [];
   /** variables to share across stories */
   protected global: Dict = {};
   /** variables local to each story */
@@ -268,6 +272,33 @@ export class Game {
   }
 
   /**
+   * Set the next story to be executed, replacing the existing queue.
+   */
+  public setNextStory(storyId: string): void {
+    const story = this.storiesMap[storyId];
+
+    if (!story) {
+      throw new Error(`Story with ID "${storyId}" doesn't exist`);
+    }
+
+    this.storyQueue.splice(0, this.storyQueue.length);
+    this.storyQueue.push(story);
+  }
+
+  /**
+   * Add a story to the list of stories to be executed secuentially
+   */
+  public queueNextStory(storyId: string): void {
+    const story = this.storiesMap[storyId];
+
+    if (!story) {
+      throw new Error(`Story with ID "${storyId}" doesn't exist`);
+    }
+
+    this.storyQueue.push(story);
+  }
+
+  /**
    * Load the stories from the specified folders recursively
    * Only files ending with `Game.STORY_EXT` will be loaded
    */
@@ -299,6 +330,7 @@ export class Game {
           }
           this.local[story.source] = {};
           this.stories.push(story);
+          this.storiesMap[story.id] = story;
           story.loaded(this.getStoryRunData(story));
           logger.story.loaded(story);
         } catch (errors) {
@@ -310,8 +342,13 @@ export class Game {
 
   /**
    * Get one random story from all the selectable ones
+   * or the already queued one
    */
   protected selectStory(): Story | undefined {
+    if (this.storyQueue.length > 0) {
+      return this.storyQueue.shift();
+    }
+
     const selectableStories = this.stories.filter(story =>
       story.selectCondition(this.getStoryRunData(story))
     );
