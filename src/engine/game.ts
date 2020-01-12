@@ -12,6 +12,7 @@ import { Story, StoryData, StoryRunData } from './story';
 import { logger, GameLogger } from './game-logger';
 import { Rng } from 'util/rng';
 import { getAppPath } from 'util/get-app-path';
+import { StoryGame } from './model/story-game';
 
 interface GameOptions {
   Ui: GameUiConstructor;
@@ -51,13 +52,19 @@ export class Game {
   /** UI to use */
   protected readonly ui: GameUi;
   /** List of loaded stories */
-  protected stories: Story[] = [];
+  protected readonly stories: Story[] = [];
+  /** Indexed loaded stories by id */
+  protected readonly storiesMap: { [key: string]: Story } = {};
   /** Current story being run */
   protected currentStory: Story | undefined;
+  /** Story to load after the current one */
+  protected readonly storyQueue: Story[] = [];
   /** variables to share across stories */
   protected global: Dict = {};
   /** variables local to each story */
   protected local: { [storyId: string]: {} } = {};
+  /** cached binded object to use as StoryGame */
+  protected readonly storyGame: StoryGame;
 
   constructor(options: GameOptions) {
     const errors = Game.validateOptions(options);
@@ -80,6 +87,11 @@ export class Game {
       game: this,
       debug: this.isDebugModeEnabled,
     });
+
+    this.storyGame = {
+      setNextStory: this.setNextStory.bind(this),
+      queueNextStory: this.queueNextStory.bind(this),
+    };
   }
 
   /**
@@ -239,7 +251,7 @@ export class Game {
    */
   public getValue(key: string): string | undefined {
     if (/^currentStory$/i.test(key)) {
-      return (this.currentStory && this.currentStory.name) || '';
+      return (this.currentStory && this.currentStory.id) || '';
     }
 
     let value: unknown;
@@ -268,6 +280,33 @@ export class Game {
   }
 
   /**
+   * Set the next story to be executed, replacing the existing queue.
+   */
+  public setNextStory(storyId: string): void {
+    const story = this.storiesMap[storyId];
+
+    if (!story) {
+      throw new Error(`Story with ID "${storyId}" doesn't exist`);
+    }
+
+    this.storyQueue.splice(0, this.storyQueue.length);
+    this.storyQueue.push(story);
+  }
+
+  /**
+   * Add a story to the list of stories to be executed secuentially
+   */
+  public queueNextStory(storyId: string): void {
+    const story = this.storiesMap[storyId];
+
+    if (!story) {
+      throw new Error(`Story with ID "${storyId}" doesn't exist`);
+    }
+
+    this.storyQueue.push(story);
+  }
+
+  /**
    * Load the stories from the specified folders recursively
    * Only files ending with `Game.STORY_EXT` will be loaded
    */
@@ -292,8 +331,14 @@ export class Game {
             .story as StoryData;
           const internal = { source: relative(appPath, join(folder, file)) };
           const story = new Story(internal, storyData);
+
+          // check if the ID is unique
+          if (this.storiesMap[story.id]) {
+            throw new Error(`Duplicated story ID "${story.id}"`);
+          }
           this.local[story.source] = {};
           this.stories.push(story);
+          this.storiesMap[story.id] = story;
           story.loaded(this.getStoryRunData(story));
           logger.story.loaded(story);
         } catch (errors) {
@@ -305,8 +350,13 @@ export class Game {
 
   /**
    * Get one random story from all the selectable ones
+   * or the already queued one
    */
   protected selectStory(): Story | undefined {
+    if (this.storyQueue.length > 0) {
+      return this.storyQueue.shift();
+    }
+
     const selectableStories = this.stories.filter(story =>
       story.selectCondition(this.getStoryRunData(story))
     );
@@ -324,6 +374,7 @@ export class Game {
   protected getStoryRunData(story: Story): StoryRunData {
     return {
       ui: this.ui,
+      game: this.storyGame,
       global: this.global,
       local: this.local[story.source],
       logger: logger.data,

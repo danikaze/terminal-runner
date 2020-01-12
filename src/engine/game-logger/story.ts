@@ -9,7 +9,7 @@ export class StoryLogger {
   }
 
   public loaded(story: Story): void {
-    this.logger.info(`Story loaded: ${story.name}`);
+    this.logger.info(`Story loaded: ${story.id}`);
   }
 
   public errorLoading(errors: string): void {
@@ -17,6 +17,6 @@ export class StoryLogger {
   }
 
   public running(story: Story): void {
-    this.logger.info(`Running story: ${story.name}`);
+    this.logger.info(`Running story: ${story.id}`);
   }
 }
