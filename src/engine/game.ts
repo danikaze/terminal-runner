@@ -239,7 +239,7 @@ export class Game {
    */
   public getValue(key: string): string | undefined {
     if (/^currentStory$/i.test(key)) {
-      return (this.currentStory && this.currentStory.name) || '';
+      return (this.currentStory && this.currentStory.id) || '';
     }
 
     let value: unknown;
@@ -292,6 +292,11 @@ export class Game {
             .story as StoryData;
           const internal = { source: relative(appPath, join(folder, file)) };
           const story = new Story(internal, storyData);
+
+          // check if the ID is unique
+          if (this.storiesMap[story.id]) {
+            throw new Error(`Duplicated story ID "${story.id}"`);
+          }
           this.local[story.source] = {};
           this.stories.push(story);
           story.loaded(this.getStoryRunData(story));

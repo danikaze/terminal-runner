@@ -18,8 +18,8 @@ export interface StoryRunData<L extends {} = {}, G extends {} = {}> {
 }
 
 export interface StoryData<L extends {} = {}, G extends {} = {}> {
-  /** Name of the story, for readability */
-  name: string;
+  /** ID of the story. Must be unique */
+  id: string;
   /** Function to call right after the story is loaded, for initialization */
   onLoad?: OnLoadCallback<L, G>;
   /** Should return `true` if the story is selectable */
@@ -36,14 +36,14 @@ export interface StoryData<L extends {} = {}, G extends {} = {}> {
  */
 export class Story<L extends {} = {}, G extends {} = {}> {
   public source: string;
-  public name: string;
+  public id: string;
   public selectCondition: SelectConditionCallback<L, G>;
   protected onLoad?: OnLoadCallback<L, G>;
   protected runStory: RunCallback<L, G>;
 
   constructor(internal: InternalStoryData, data: StoryData<L, G>) {
     this.source = internal.source;
-    this.name = data.name;
+    this.id = data.id;
     this.selectCondition = data.selectCondition;
     this.runStory = data.run;
     this.onLoad = data.onLoad;

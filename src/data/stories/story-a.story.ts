@@ -8,7 +8,7 @@ interface LocalData {
 }
 
 export const story: StoryData<LocalData, never> = {
-  name: 'Story A',
+  id: 'Story A',
   onLoad: ({ local }) => {
     local.run = 0;
   },
