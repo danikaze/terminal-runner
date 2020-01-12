@@ -21,6 +21,12 @@ Running the following command will execute the program previously built into the
 npm start
 ```
 
+to see all the accepted flags, run it with the `--help` parameter
+
+```
+npm start -- --help
+```
+
 ## Testing
 
 ```
@@ -45,6 +51,16 @@ The code is placed inside the `src` folder, which structure is broken into four 
 - `engine`: is how the game logic works. the Game sytem code is placed here
 - `ui`: the UI is not coupled with the game engine, which allows the game engine to be presented in different flavors (terminal-based game, web-based game, etc.)
 - `util`: is for library-like functions. Helpers that can be used in any place of the code
+
+### Generating binary files
+
+This project uses [zeit/pkg](https://github.com/zeit/pkg) to build binaries. To prepare the binaries just run
+
+```
+npm run pack
+```
+
+And the binary files will be generated into the `app/bin` folder.
 
 ### Developing on Windows
 
