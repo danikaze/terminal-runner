@@ -12,6 +12,7 @@ import { Story, StoryData, StoryRunData } from './story';
 import { logger, GameLogger } from './game-logger';
 import { Rng } from 'util/rng';
 import { getAppPath } from 'util/get-app-path';
+import { StoryGame } from './model/story-game';
 
 interface GameOptions {
   Ui: GameUiConstructor;
@@ -62,6 +63,8 @@ export class Game {
   protected global: Dict = {};
   /** variables local to each story */
   protected local: { [storyId: string]: {} } = {};
+  /** cached binded object to use as StoryGame */
+  protected readonly storyGame: StoryGame;
 
   constructor(options: GameOptions) {
     const errors = Game.validateOptions(options);
@@ -84,6 +87,11 @@ export class Game {
       game: this,
       debug: this.isDebugModeEnabled,
     });
+
+    this.storyGame = {
+      setNextStory: this.setNextStory.bind(this),
+      queueNextStory: this.queueNextStory.bind(this),
+    };
   }
 
   /**
@@ -366,6 +374,7 @@ export class Game {
   protected getStoryRunData(story: Story): StoryRunData {
     return {
       ui: this.ui,
+      game: this.storyGame,
       global: this.global,
       local: this.local[story.source],
       logger: logger.data,

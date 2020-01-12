@@ -1,6 +1,7 @@
 import { logger } from './game-logger';
 import { GameUi } from './model/ui';
 import { NsLogger } from 'util/logger';
+import { StoryGame } from './model/story-game';
 
 type OnLoadCallback<L, G> = (data: StoryRunData<L, G>) => void;
 type SelectConditionCallback<L, G> = (data: StoryRunData<L, G>) => boolean;
@@ -12,6 +13,7 @@ interface InternalStoryData {
 
 export interface StoryRunData<L extends {} = {}, G extends {} = {}> {
   ui: GameUi;
+  game: StoryGame;
   global: G;
   local: L;
   logger: NsLogger;
