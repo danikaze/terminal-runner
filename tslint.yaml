@@ -419,3 +419,5 @@ rules:
       - engine
       - ui
       - util
+      # blessed is used as an alias for neo-blessed to properly use @types/blessed
+      - blessed
