@@ -58,6 +58,9 @@ module.exports = env => {
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.json'],
       plugins: [new TsconfigPathsPlugin({ configFile: 'tsconfig.json' })],
+      alias: {
+        blessed$: 'neo-blessed',
+      },
     },
 
     target: 'node',
@@ -90,7 +93,13 @@ module.exports = env => {
         // In Windows, blessed requires some files for terminals in runtime
         // This just fixes the routes so they are kept inside the `app` target folder
         {
-          test: join(__dirname, 'node_modules', 'blessed', 'lib', 'tput.js'),
+          test: join(
+            __dirname,
+            'node_modules',
+            'neo-blessed',
+            'lib',
+            'tput.js'
+          ),
           loader: 'string-replace-loader',
           options: {
             search: "__dirname \\+ '/../usr/",
@@ -115,7 +124,10 @@ module.exports = env => {
       ),
       // Copy the files required by blessed in runtime into the target `app` folder:
       new CopyPlugin([
-        { from: join(__dirname, 'node_modules', 'blessed', 'usr'), to: 'usr' },
+        {
+          from: join(__dirname, 'node_modules', 'neo-blessed', 'usr'),
+          to: 'usr',
+        },
       ]),
     ]
       // when packing, we need to copy resources to the binary folder too
@@ -124,7 +136,7 @@ module.exports = env => {
           ? [
               new CopyPlugin([
                 {
-                  from: join(__dirname, 'node_modules', 'blessed', 'usr'),
+                  from: join(__dirname, 'node_modules', 'neo-blessed', 'usr'),
                   to: 'bin/usr',
                 },
                 {
