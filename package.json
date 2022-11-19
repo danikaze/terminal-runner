@@ -76,7 +76,7 @@
     "typescript": "^3.7.3",
     "typescript-tslint-plugin": "^0.5.5",
     "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.10"
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
     "blessed-contrib": "^4.8.18",
